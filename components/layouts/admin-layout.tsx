@@ -14,7 +14,7 @@ import {
   MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '@/lib/store';
-import { appConfig } from '@/lib/app-config';
+import { useAppConfig } from '@/components/app-config-provider';
 
 const { Sider, Header, Content } = Layout;
 
@@ -26,6 +26,7 @@ const navItems = [
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const appConfig = useAppConfig();
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();

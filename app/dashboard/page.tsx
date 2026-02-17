@@ -18,7 +18,7 @@ import {
 } from '@ant-design/icons';
 import { AppLayout } from '@/components/app-layout';
 import { StatusTag, getStatusLabel } from '@/components/status-tag';
-import { appConfig } from '@/lib/app-config';
+import { useAppConfig } from '@/components/app-config-provider';
 
 const { Title, Text } = Typography;
 
@@ -38,6 +38,7 @@ const statsConfig = [
 ];
 
 export default function DashboardPage() {
+  const appConfig = useAppConfig();
   const router = useRouter();
   const { token, ready } = useAuth();
   const { clearToken } = useAuthStore();

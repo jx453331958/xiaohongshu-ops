@@ -174,9 +174,11 @@ supabase/migrations/
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `NEXT_PUBLIC_APP_NAME` | 后台主名称（侧栏、登录页） | `小红书运营` |
-| `NEXT_PUBLIC_APP_SHORT_NAME` | 侧栏折叠时的缩写 | `XHS` |
-| `NEXT_PUBLIC_APP_SUBTITLE` | 登录页副标题 | `通用运营后台` |
+| `APP_NAME` | 后台主名称（侧栏、登录页） | `小红书运营` |
+| `APP_SHORT_NAME` | 侧栏折叠时的缩写 | `XHS` |
+| `APP_SUBTITLE` | 登录页副标题 | `通用运营后台` |
+
+修改品牌变量后运行 `./manage.sh reload` 即可生效，无需重建镜像。
 
 ### 生产部署
 

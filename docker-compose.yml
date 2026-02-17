@@ -292,6 +292,9 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       API_AUTH_TOKEN: ${API_AUTH_TOKEN}
       MCP_INTERNAL_URL: http://mcp:3002
+      APP_NAME: ${APP_NAME:-小红书运营}
+      APP_SHORT_NAME: ${APP_SHORT_NAME:-XHS}
+      APP_SUBTITLE: ${APP_SUBTITLE:-通用运营后台}
 
   # Nginx - Reverse proxy
   nginx:

@@ -398,9 +398,9 @@ API_AUTH_TOKEN=${api_token}
 # Application Branding
 ############
 
-NEXT_PUBLIC_APP_NAME=${app_name}
-NEXT_PUBLIC_APP_SHORT_NAME=${app_short}
-NEXT_PUBLIC_APP_SUBTITLE=${app_subtitle}
+APP_NAME=${app_name}
+APP_SHORT_NAME=${app_short}
+APP_SUBTITLE=${app_subtitle}
 
 ############
 # Exposed Ports (nginx = HTTP entry point, db = TCP)
@@ -732,7 +732,7 @@ cmd_update() {
     if [[ -f "$f" ]]; then
       has_migrations=true
       info "执行: $(basename "$f")"
-      compose exec -T db psql -U postgres -d "${POSTGRES_DB:-postgres}" < "$f" 2>/dev/null || \
+      compose exec -T db psql -U supabase_admin -d "${POSTGRES_DB:-postgres}" < "$f" 2>/dev/null || \
         warn "迁移 $(basename "$f") 执行失败（可能已执行过）"
     fi
   done
@@ -779,7 +779,7 @@ cmd_db() {
       for f in supabase/migrations/*.sql; do
         if [[ -f "$f" ]]; then
           info "执行: $(basename "$f")"
-          compose exec -T db psql -U postgres -d "${POSTGRES_DB:-postgres}" < "$f"
+          compose exec -T db psql -U supabase_admin -d "${POSTGRES_DB:-postgres}" < "$f"
         fi
       done
       log "迁移完成"

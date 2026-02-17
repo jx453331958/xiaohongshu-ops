@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
-import { appConfig } from '@/lib/app-config';
+import { useAppConfig } from '@/components/app-config-provider';
 import { Form, Input, Button, App } from 'antd';
 import { LockOutlined, LoginOutlined } from '@ant-design/icons';
 
 export default function LoginPage() {
+  const appConfig = useAppConfig();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { setToken: saveToken } = useAuthStore();

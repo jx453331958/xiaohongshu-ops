@@ -1,19 +1,25 @@
 import type { Metadata } from "next";
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { AntdProvider } from './antd-provider';
-import { appConfig } from '@/lib/app-config';
+import { getAppConfig } from '@/lib/app-config';
+import { AppConfigProvider } from '@/components/app-config-provider';
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: `${appConfig.name} - ${appConfig.subtitle}`,
-  description: `${appConfig.name}管理系统`,
-};
+export function generateMetadata(): Metadata {
+  const config = getAppConfig();
+  return {
+    title: `${config.name} - ${config.subtitle}`,
+    description: `${config.name}管理系统`,
+  };
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const config = getAppConfig();
+
   return (
     <html lang="zh-CN">
       <head>
@@ -27,7 +33,9 @@ export default function RootLayout({
       <body>
         <AntdRegistry>
           <AntdProvider>
-            {children}
+            <AppConfigProvider config={config}>
+              {children}
+            </AppConfigProvider>
           </AntdProvider>
         </AntdRegistry>
       </body>
