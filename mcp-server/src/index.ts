@@ -14,6 +14,7 @@ import { getSkillMarkdown } from "./skill-template.js";
 
 const PORT = Number(process.env.MCP_PORT) || 3002;
 const HOST = process.env.MCP_HOST || "0.0.0.0";
+const AUTH_TOKEN = process.env.XHS_API_AUTH_TOKEN || "";
 
 function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -54,6 +55,17 @@ async function main() {
 
     // MCP endpoint
     if (url.pathname === "/mcp") {
+      // Bearer token authentication
+      if (AUTH_TOKEN) {
+        const authHeader = req.headers["authorization"] || "";
+        const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+        if (token !== AUTH_TOKEN) {
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Unauthorized" }));
+          return;
+        }
+      }
+
       // Handle new session initialization (POST without session ID)
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
 

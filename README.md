@@ -41,7 +41,7 @@ chmod +x manage.sh
 安装完成后访问（所有 HTTP 流量统一走 Nginx）：
 - 应用首页：http://localhost:8080
 - Supabase Studio：http://localhost:8080/studio/
-- MCP Server：http://localhost:8080/mcp
+- MCP Server：http://localhost:8080/mcp（需要 Bearer Token 认证，与 API 共用 `API_AUTH_TOKEN`）
 
 如需重新配置，运行 `./manage.sh config`。
 
