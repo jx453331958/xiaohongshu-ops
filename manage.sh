@@ -884,10 +884,83 @@ EOF
 }
 
 # ============================================================
+# 交互式菜单
+# ============================================================
+cmd_menu() {
+  echo -e "${CYAN}━━━ xiaohongshu-ops 管理面板 ━━━${NC}"
+  echo ""
+
+  # 根据当前状态显示不同菜单
+  if [[ ! -f .env ]]; then
+    echo -e "  ${YELLOW}首次使用，请先安装${NC}"
+    echo ""
+    echo "  1) 一键安装"
+    echo "  0) 退出"
+    echo ""
+    read -rp "  请选择 [1]: " choice
+    case "${choice:-1}" in
+      1) cmd_install ;;
+      0) exit 0 ;;
+      *) err "无效选择"; exit 1 ;;
+    esac
+  else
+    # 检测服务是否在运行
+    local running=false
+    if command -v docker &>/dev/null && compose ps --format "{{.Name}}" 2>/dev/null | grep -q .; then
+      running=true
+    fi
+
+    if $running; then
+      echo "  1) 查看状态       5) 重新配置 .env"
+      echo "  2) 查看日志       6) 更新部署"
+      echo "  3) 重启服务       7) 健康检查"
+      echo "  4) 停止服务       8) 卸载"
+      echo "  0) 退出"
+      echo ""
+      read -rp "  请选择 [1]: " choice
+      case "${choice:-1}" in
+        1) cmd_status; show_access_info ;;
+        2) cmd_logs ;;
+        3) cmd_restart ;;
+        4) cmd_stop ;;
+        5) cmd_config ;;
+        6) cmd_update ;;
+        7) cmd_health ;;
+        8) cmd_uninstall ;;
+        0) exit 0 ;;
+        *) err "无效选择"; exit 1 ;;
+      esac
+    else
+      echo "  1) 启动服务       4) 重新配置 .env"
+      echo "  2) 更新部署       5) 卸载"
+      echo "  3) 查看状态       6) 帮助"
+      echo "  0) 退出"
+      echo ""
+      read -rp "  请选择 [1]: " choice
+      case "${choice:-1}" in
+        1) cmd_start ;;
+        2) cmd_update ;;
+        3) cmd_status ;;
+        4) cmd_config ;;
+        5) cmd_uninstall ;;
+        6) cmd_help ;;
+        0) exit 0 ;;
+        *) err "无效选择"; exit 1 ;;
+      esac
+    fi
+  fi
+}
+
+# ============================================================
 # 入口
 # ============================================================
-cmd="${1:-help}"
-shift 2>/dev/null || true
+if [[ $# -eq 0 ]]; then
+  cmd_menu
+  exit 0
+fi
+
+cmd="$1"
+shift
 
 case "$cmd" in
   install)   cmd_install ;;
