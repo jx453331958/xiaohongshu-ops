@@ -149,6 +149,22 @@ is_port_free() {
   fi
 }
 
+# base64url 编码（无填充）
+base64url_encode() {
+  openssl base64 -A | tr '+/' '-_' | tr -d '='
+}
+
+# 用 HMAC-SHA256 签发 JWT
+sign_jwt() {
+  local secret="$1" payload="$2"
+  local header='{"alg":"HS256","typ":"JWT"}'
+  local h p sig
+  h=$(printf '%s' "$header" | base64url_encode)
+  p=$(printf '%s' "$payload" | base64url_encode)
+  sig=$(printf '%s' "${h}.${p}" | openssl dgst -sha256 -hmac "$secret" -binary | base64url_encode)
+  echo "${h}.${p}.${sig}"
+}
+
 # 查找 N 个连续空闲高位端口（10000-60000）
 find_free_ports() {
   local count="$1"
@@ -230,13 +246,15 @@ generate_env_interactive() {
   s3_key_id=$(openssl rand -hex 16)
   s3_key_secret=$(openssl rand -hex 32)
 
-  # ── C. 固定 Demo JWT 密钥 ──
+  # ── C. JWT 三件套（随机生成，互相匹配） ──
 
-  local jwt_secret="your-super-secret-jwt-token-with-at-least-32-characters-long"
-  local anon_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
-  local service_role_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
-
-  warn "使用 Supabase Demo JWT 密钥，生产环境请重新生成"
+  local jwt_secret anon_key service_role_key
+  jwt_secret=$(openssl rand -base64 32)
+  local iat exp
+  iat=$(date +%s)
+  exp=$((iat + 157680000))  # 5 年
+  anon_key=$(sign_jwt "$jwt_secret" "{\"role\":\"anon\",\"iss\":\"supabase\",\"iat\":${iat},\"exp\":${exp}}")
+  service_role_key=$(sign_jwt "$jwt_secret" "{\"role\":\"service_role\",\"iss\":\"supabase\",\"iat\":${iat},\"exp\":${exp}}")
   echo ""
 
   # ── D. 派生值 ──
