@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
+import { appConfig } from '@/lib/app-config';
 import { Form, Input, Button, App } from 'antd';
 import { LockOutlined, LoginOutlined } from '@ant-design/icons';
 
@@ -79,10 +80,10 @@ export default function LoginPage() {
             margin: '0 0 8px',
             letterSpacing: '-0.02em',
           }}>
-            小红书运营
+            {appConfig.name}
           </h1>
           <p style={{ color: '#B4A9C3', margin: 0, fontSize: 14 }}>
-            通用运营后台
+            {appConfig.subtitle}
           </p>
         </div>
 

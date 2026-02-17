@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { AntdProvider } from './antd-provider';
+import { appConfig } from '@/lib/app-config';
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "小红书通用运营后台",
-  description: "小红书内容运营管理系统",
+  title: `${appConfig.name} - ${appConfig.subtitle}`,
+  description: `${appConfig.name}管理系统`,
 };
 
 export default function RootLayout({

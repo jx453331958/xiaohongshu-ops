@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import { AppLayout } from '@/components/app-layout';
 import { StatusTag, getStatusLabel } from '@/components/status-tag';
+import { appConfig } from '@/lib/app-config';
 
 const { Title, Text } = Typography;
 
@@ -97,7 +98,7 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
           <div>
             <Title level={3} style={{ marginBottom: 4 }}>仪表盘</Title>
-            <Text type="secondary">欢迎回到小红书运营后台</Text>
+            <Text type="secondary">{`欢迎回到${appConfig.name}后台`}</Text>
           </div>
           <Link href="/articles">
             <Button type="primary" icon={<PlusOutlined />}>新建文章</Button>

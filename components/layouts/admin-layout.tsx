@@ -14,6 +14,7 @@ import {
   MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '@/lib/store';
+import { appConfig } from '@/lib/app-config';
 
 const { Sider, Header, Content } = Layout;
 
@@ -73,7 +74,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             WebkitTextFillColor: 'transparent',
             whiteSpace: 'nowrap',
           }}>
-            {collapsed ? 'XHS' : '小红书运营'}
+            {collapsed ? appConfig.shortName : appConfig.name}
           </span>
         </div>
 

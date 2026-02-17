@@ -187,6 +187,14 @@ supabase/migrations/
 | `SERVICE_ROLE_KEY` | 服务端密钥 | 见 .env.example |
 | `SUPABASE_PUBLIC_URL` | Supabase 公开 URL | `http://localhost:8000` |
 
+### 品牌定制
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `NEXT_PUBLIC_APP_NAME` | 后台主名称（侧栏、登录页） | `小红书运营` |
+| `NEXT_PUBLIC_APP_SHORT_NAME` | 侧栏折叠时的缩写 | `XHS` |
+| `NEXT_PUBLIC_APP_SUBTITLE` | 登录页副标题 | `通用运营后台` |
+
 ### 生产部署
 
 生产环境需要额外配置：
