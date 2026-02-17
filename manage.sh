@@ -533,13 +533,9 @@ cmd_uninstall() {
   echo ""
   read -rp "是否同时删除数据（volumes/ 目录和 Docker 数据卷）? (y/N): " del_data
   if [[ "$del_data" =~ ^[Yy]$ ]]; then
-    # DB 数据目录属主是容器内 postgres 用户，需要提权删除
-    if rm -rf volumes/ 2>/dev/null; then
-      true
-    else
-      warn "普通用户无权删除 DB 数据，需要 sudo"
-      sudo rm -rf volumes/
-    fi
+    # DB 数据目录属主是容器内 postgres 用户(uid 999)，用 docker 以 root 删除
+    docker run --rm -v "$(pwd)/volumes:/vol" alpine rm -rf /vol/db /vol/storage
+    rm -rf volumes/
     log "数据已删除"
   else
     info "保留数据目录"
