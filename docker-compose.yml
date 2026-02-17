@@ -246,7 +246,7 @@ services:
       retries: 10
       start_period: 30s
     ports:
-      - "5434:5432"
+      - "${DB_PORT:-5434}:5432"
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: 5432

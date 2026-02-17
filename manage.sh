@@ -232,23 +232,25 @@ generate_env_interactive() {
   echo ""
 
   echo -e "${CYAN}🔌 端口设置${NC}"
-  local app_port nginx_port kong_http kong_https mcp_port
+  local app_port nginx_port kong_http kong_https mcp_port db_port
   local port_start
-  if port_start=$(find_free_ports 5); then
+  if port_start=$(find_free_ports 6); then
     app_port=$((port_start))
     nginx_port=$((port_start + 1))
     kong_http=$((port_start + 2))
     kong_https=$((port_start + 3))
     mcp_port=$((port_start + 4))
-    echo "  已自动分配连续端口 ${port_start}-$((port_start + 4)):"
+    db_port=$((port_start + 5))
+    echo "  已自动分配连续端口 ${port_start}-$((port_start + 5)):"
     echo "    应用:        ${app_port}"
     echo "    Nginx:       ${nginx_port}"
     echo "    Kong HTTP:   ${kong_http}"
     echo "    Kong HTTPS:  ${kong_https}"
     echo "    MCP Server:  ${mcp_port}"
+    echo "    数据库:      ${db_port}"
   else
     warn "未能找到连续空闲端口，使用默认值"
-    app_port=3001; nginx_port=8080; kong_http=8001; kong_https=8444; mcp_port=3002
+    app_port=3001; nginx_port=8080; kong_http=8001; kong_https=8444; mcp_port=3002; db_port=5434
   fi
   echo ""
 
@@ -400,6 +402,7 @@ NEXT_PUBLIC_APP_SUBTITLE=${app_subtitle}
 APP_PORT=${app_port}
 NGINX_PORT=${nginx_port}
 MCP_PORT=${mcp_port}
+DB_PORT=${db_port}
 ENVEOF
 
   log "配置文件已生成: .env"
@@ -415,11 +418,12 @@ ENVEOF
 
 # 显示访问地址
 show_access_info() {
-  local app_port nginx_port kong_port mcp_port
+  local app_port nginx_port kong_port mcp_port db_port
   app_port=$(get_env_var APP_PORT 3001)
   nginx_port=$(get_env_var NGINX_PORT 8080)
   kong_port=$(get_env_var KONG_HTTP_PORT 8001)
   mcp_port=$(get_env_var MCP_PORT 3002)
+  db_port=$(get_env_var DB_PORT 5434)
 
   local api_token
   api_token=$(get_env_var API_AUTH_TOKEN)
@@ -431,6 +435,7 @@ show_access_info() {
   info "MCP Server:      http://localhost:${mcp_port}/mcp"
   info "Supabase Studio: http://localhost:${nginx_port}/studio/"
   info "Supabase API:    http://localhost:${kong_port}"
+  info "数据库:          localhost:${db_port}"
   echo ""
   echo -e "${CYAN}━━━ API 鉴权 ━━━${NC}"
   info "Token: ${api_token}"
