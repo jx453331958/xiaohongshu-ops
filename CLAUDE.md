@@ -21,12 +21,12 @@
 
 ## 端口映射
 
-| 服务 | 默认端口 |
-|------|----------|
-| App | 3001 |
-| MCP Server | 3002 |
-| DB | 5434 |
-| Kong | 8001 / 8444 |
+所有 HTTP 流量统一走 Nginx，DB 是 TCP 协议独立暴露：
+
+| 服务 | 默认端口 | 说明 |
+|------|----------|------|
+| Nginx | 8080 | 唯一 HTTP 入口（代理 app / kong / mcp / studio） |
+| DB | 5434 | PostgreSQL TCP 直连 |
 
 ## 认证
 
@@ -66,8 +66,8 @@
 
 - **位置**: `mcp-server/` 子目录（独立 TypeScript 项目）
 - **技术**: `@modelcontextprotocol/sdk` + Streamable HTTP 传输
-- **端点**: `http://<server-ip>:3002/mcp`
-- **配置**: 环境变量 `XHS_API_BASE_URL` + `XHS_API_AUTH_TOKEN` + `MCP_PORT`
+- **端点**: `http://<server-ip>:8080/mcp`（通过 Nginx 代理）
+- **配置**: 环境变量 `XHS_API_BASE_URL` + `XHS_API_AUTH_TOKEN` + `MCP_PORT`（容器内部端口，不暴露到主机）
 - **11 个工具**: list_articles, create_article, get_article, update_article, delete_article, get_article_status, update_article_status, publish_article, list_article_images, delete_article_image, get_article_versions
 - **不含图片上传**（LLM 无法提供二进制文件，通过 Web UI 上传）
 - **接口文档**: `docs/api.md`

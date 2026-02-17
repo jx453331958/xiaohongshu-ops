@@ -243,25 +243,17 @@ generate_env_interactive() {
   echo ""
 
   echo -e "${CYAN}🔌 端口设置${NC}"
-  local app_port nginx_port kong_http kong_https mcp_port db_port
+  local nginx_port db_port
   local port_start
-  if port_start=$(find_free_ports 6); then
-    app_port=$((port_start))
-    nginx_port=$((port_start + 1))
-    kong_http=$((port_start + 2))
-    kong_https=$((port_start + 3))
-    mcp_port=$((port_start + 4))
-    db_port=$((port_start + 5))
-    echo "  已自动分配连续端口 ${port_start}-$((port_start + 5)):"
-    echo "    应用:        ${app_port}"
-    echo "    Nginx:       ${nginx_port}"
-    echo "    Kong HTTP:   ${kong_http}"
-    echo "    Kong HTTPS:  ${kong_https}"
-    echo "    MCP Server:  ${mcp_port}"
-    echo "    数据库:      ${db_port}"
+  if port_start=$(find_free_ports 2); then
+    nginx_port=$((port_start))
+    db_port=$((port_start + 1))
+    echo "  已自动分配端口:"
+    echo "    Nginx (HTTP 入口): ${nginx_port}"
+    echo "    数据库 (TCP):      ${db_port}"
   else
     warn "未能找到连续空闲端口，使用默认值"
-    app_port=3001; nginx_port=8080; kong_http=8001; kong_https=8444; mcp_port=3002; db_port=5434
+    nginx_port=8080; db_port=5434
   fi
   echo ""
 
@@ -334,13 +326,6 @@ PG_META_CRYPTO_KEY=${meta_key}
 POSTGRES_HOST=db
 POSTGRES_DB=postgres
 POSTGRES_PORT=5432
-
-############
-# API Proxy - Kong Configuration
-############
-
-KONG_HTTP_PORT=${kong_http}
-KONG_HTTPS_PORT=${kong_https}
 
 ############
 # API - PostgREST Configuration
@@ -418,12 +403,10 @@ NEXT_PUBLIC_APP_SHORT_NAME=${app_short}
 NEXT_PUBLIC_APP_SUBTITLE=${app_subtitle}
 
 ############
-# Application Ports (avoid conflicts with 5432, 8000, 3000)
+# Exposed Ports (nginx = HTTP entry point, db = TCP)
 ############
 
-APP_PORT=${app_port}
 NGINX_PORT=${nginx_port}
-MCP_PORT=${mcp_port}
 DB_PORT=${db_port}
 
 ############
@@ -448,41 +431,37 @@ ENVEOF
   warn "  Studio 密码 → DASHBOARD_PASSWORD"
 }
 
-# 从 MCP Server 拉取 skill.md
+# 从 MCP Server 拉取 skill.md（通过 nginx 代理）
 generate_skill_file() {
-  local mcp_port
-  mcp_port=$(get_env_var MCP_PORT 3002)
+  local nginx_port
+  nginx_port=$(get_env_var NGINX_PORT 8080)
 
-  if curl -sf "http://localhost:${mcp_port}/skill" -o skill.md 2>/dev/null; then
+  if curl -sf "http://localhost:${nginx_port}/skill" -o skill.md 2>/dev/null; then
     log "已生成 skill.md"
     info "使用方法："
     info "  mkdir -p .claude/skills/xiaohongshu-ops"
     info "  cp skill.md .claude/skills/xiaohongshu-ops/SKILL.md"
   else
-    warn "Skill 文件生成失败，可稍后访问 http://localhost:${mcp_port}/skill 获取"
+    warn "Skill 文件生成失败，可稍后访问 http://localhost:${nginx_port}/skill 获取"
   fi
 }
 
 # 显示访问地址
 show_access_info() {
-  local app_port nginx_port kong_port mcp_port db_port
-  app_port=$(get_env_var APP_PORT 3001)
+  local nginx_port db_port
   nginx_port=$(get_env_var NGINX_PORT 8080)
-  kong_port=$(get_env_var KONG_HTTP_PORT 8001)
-  mcp_port=$(get_env_var MCP_PORT 3002)
   db_port=$(get_env_var DB_PORT 5434)
 
   local api_token
   api_token=$(get_env_var API_AUTH_TOKEN)
 
   echo ""
-  echo -e "${CYAN}━━━ 访问地址 ━━━${NC}"
-  info "应用:            http://localhost:${app_port}"
-  info "Nginx 入口:      http://localhost:${nginx_port}"
-  info "MCP Server:      http://localhost:${mcp_port}/mcp"
+  echo -e "${CYAN}━━━ 访问地址（统一通过 Nginx）━━━${NC}"
+  info "应用:            http://localhost:${nginx_port}"
+  info "MCP Server:      http://localhost:${nginx_port}/mcp"
   info "Supabase Studio: http://localhost:${nginx_port}/studio/"
-  info "Supabase API:    http://localhost:${kong_port}"
-  info "数据库:          localhost:${db_port}"
+  info "Supabase API:    http://localhost:${nginx_port}/rest/v1/"
+  info "数据库 (TCP):    localhost:${db_port}"
   echo ""
   echo -e "${CYAN}━━━ 凭据 ━━━${NC}"
   info "API Token (调用后台 API / MCP 接口): ${api_token}"
@@ -881,30 +860,19 @@ cmd_health() {
 
   echo ""
 
-  # 检查端口 - 从 .env 读取
-  local app_port nginx_port kong_port mcp_port
-  app_port=$(get_env_var APP_PORT 3001)
+  # 检查 Nginx 入口下的各路径
+  local nginx_port
   nginx_port=$(get_env_var NGINX_PORT 8080)
-  kong_port=$(get_env_var KONG_HTTP_PORT 8001)
-  mcp_port=$(get_env_var MCP_PORT 3002)
 
-  info "端口检查:"
-  for port in "$app_port" "$kong_port" "$nginx_port"; do
-    if curl -s -o /dev/null --connect-timeout 2 "http://localhost:${port}" 2>/dev/null; then
-      log "localhost:${port} ✓"
+  info "Nginx 端口检查 (localhost:${nginx_port}):"
+  for path in "/" "/mcp" "/studio/" "/health"; do
+    if curl -s -o /dev/null --connect-timeout 2 "http://localhost:${nginx_port}${path}" 2>/dev/null; then
+      log "  ${path} ✓"
     else
-      warn "localhost:${port} ✗ (可能还在启动中)"
+      warn "  ${path} ✗ (可能还在启动中)"
       all_ok=false
     fi
   done
-
-  # MCP 端口检查
-  if curl -s -o /dev/null --connect-timeout 2 "http://localhost:${mcp_port}/mcp" 2>/dev/null; then
-    log "localhost:${mcp_port}/mcp ✓"
-  else
-    warn "localhost:${mcp_port}/mcp ✗ (可能还在启动中)"
-    all_ok=false
-  fi
 
   echo ""
   if $all_ok; then

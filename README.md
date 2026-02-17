@@ -38,10 +38,10 @@ chmod +x manage.sh
 
 按提示完成配置（品牌名称、端口等，回车使用默认值），密钥全部自动生成。
 
-安装完成后访问：
-- 应用首页：http://localhost:3001
+安装完成后访问（所有 HTTP 流量统一走 Nginx）：
+- 应用首页：http://localhost:8080
 - Supabase Studio：http://localhost:8080/studio/
-- Supabase API：http://localhost:8001
+- MCP Server：http://localhost:8080/mcp
 
 如需重新配置，运行 `./manage.sh config`。
 
@@ -106,8 +106,8 @@ xiaohongshu-ops/
 
 ### Supabase 全家桶
 
-- **PostgreSQL**：数据库（端口 5432）
-- **Kong**：API Gateway（端口 8000/8443）
+- **PostgreSQL**：数据库（暴露到主机，默认 5434）
+- **Kong**：API Gateway（容器内部）
 - **GoTrue**：认证服务
 - **PostgREST**：REST API
 - **Storage API**：文件存储
@@ -116,8 +116,9 @@ xiaohongshu-ops/
 
 ### 应用服务
 
-- **Next.js App**：前端应用（端口 3000）
-- **Nginx**：反向代理（端口 80/443）
+- **Next.js App**：前端应用（容器内部）
+- **MCP Server**：AI Agent 接口（通过 Nginx 路由到 /mcp）
+- **Nginx**：唯一 HTTP 入口（默认 8080）
 
 ## API 说明
 

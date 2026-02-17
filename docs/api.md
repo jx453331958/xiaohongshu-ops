@@ -148,11 +148,11 @@ GET /api/articles
 ```bash
 # 获取所有草稿
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:3001/api/articles?status=draft"
+  "http://localhost:8080/api/articles?status=draft"
 
 # 搜索包含"AI工具"的文章
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:3001/api/articles?search=AI工具&limit=10"
+  "http://localhost:8080/api/articles?search=AI工具&limit=10"
 ```
 
 ---
@@ -190,7 +190,7 @@ POST /api/articles
 curl -X POST -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"5个AI工具推荐","content":"# 正文\n内容...","tags":["AI","工具"]}' \
-  "http://localhost:3001/api/articles"
+  "http://localhost:8080/api/articles"
 ```
 
 ---
@@ -360,7 +360,7 @@ PUT /api/articles/:id/status
 curl -X PUT -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status":"pending_render"}' \
-  "http://localhost:3001/api/articles/<article-id>/status"
+  "http://localhost:8080/api/articles/<article-id>/status"
 ```
 
 ---
@@ -484,7 +484,7 @@ POST /api/articles/:id/images
 curl -X POST -H "Authorization: Bearer $TOKEN" \
   -F "file=@slide1.png" \
   -F "sort_order=1" \
-  "http://localhost:3001/api/articles/<article-id>/images"
+  "http://localhost:8080/api/articles/<article-id>/images"
 ```
 
 ---
@@ -591,7 +591,7 @@ GET /api/images/{path}
 **示例:**
 
 ```
-http://localhost:3001/api/images/abc-123/1708123456-xyz.png
+http://localhost:8080/api/images/abc-123/1708123456-xyz.png
 ```
 
 ---
@@ -602,7 +602,7 @@ http://localhost:3001/api/images/abc-123/1708123456-xyz.png
 
 ```bash
 TOKEN="your-bearer-token"
-BASE="http://localhost:3001/api"
+BASE="http://localhost:8080/api"
 
 # 1. 创建草稿
 ARTICLE=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" \
