@@ -1,0 +1,255 @@
+# xiaohongshu-ops - 小红书通用运营后台
+
+基于 Next.js 15 + Supabase 的现代化内容管理系统，专为小红书图文创作优化。
+
+## 功能特性
+
+- 📝 文章管理：创建、编辑、版本控制
+- 🖼️ 图片管理：多图上传、排序、预览
+- 📅 内容日历：按日期组织内容
+- 🔄 状态流转：草稿 → 待审核 → 已审核 → 已发布
+- 📊 数据统计：浏览、点赞、收藏、评论
+
+## 技术栈
+
+- **前端**：Next.js 15 (App Router), React 19, TypeScript
+- **UI 组件**：Ant Design 5 (暗色主题), @ant-design/icons
+- **后端**：Supabase (PostgreSQL + Auth + Storage)
+- **部署**：Docker Compose, Nginx
+
+## 快速开始
+
+### 前置要求
+
+- Docker & Docker Compose（生产部署）
+- Node.js 24+ & npm（本地开发）
+
+### 一键部署（Docker Compose）
+
+1. **克隆仓库**
+   ```bash
+   git clone <repo-url>
+   cd xiaohongshu-ops
+   ```
+
+2. **配置环境变量**
+   ```bash
+   cp .env.example .env
+   # 编辑 .env，至少修改以下内容：
+   # - POSTGRES_PASSWORD: 设置强密码
+   # - JWT_SECRET: 生成随机密钥（openssl rand -base64 32）
+   # - ANON_KEY & SERVICE_ROLE_KEY: 使用 https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys
+   # - SUPABASE_PUBLIC_URL: 设置为你的域名（生产环境）
+   ```
+
+3. **启动服务**
+   ```bash
+   docker compose up -d
+   ```
+
+4. **初始化数据库**
+   ```bash
+   # 等待所有服务启动（约30秒）
+   docker compose logs -f db
+   
+   # 执行数据库迁移
+   # 方式1：通过 Supabase Studio (http://localhost/studio)
+   # 方式2：手动执行 SQL
+   docker compose exec db psql -U postgres -d postgres -f /docker-entrypoint-initdb.d/00_schema.sql
+   ```
+
+5. **访问应用**
+   - 应用首页：http://localhost
+   - Supabase Studio：http://localhost/studio
+   - API 文档：http://localhost/rest/v1
+
+### 本地开发
+
+1. **安装依赖**
+   ```bash
+   npm install
+   ```
+
+2. **启动 Supabase（后台服务）**
+   ```bash
+   docker compose up -d db kong auth rest storage meta studio
+   ```
+
+3. **配置环境变量**
+   ```bash
+   cp .env.example .env.local
+   # 使用 http://localhost:8000 作为 NEXT_PUBLIC_SUPABASE_URL
+   ```
+
+4. **运行开发服务器**
+   ```bash
+   npm run dev
+   ```
+
+5. **访问**
+   - 应用：http://localhost:3000
+   - Supabase Studio：http://localhost/studio
+
+## 项目结构
+
+```
+xiaohongshu-ops/
+├── app/                    # Next.js App Router
+│   ├── api/               # API Routes
+│   │   └── articles/      # 文章相关 API
+│   ├── articles/          # 文章管理页面
+│   ├── calendar/          # 内容日历
+│   └── dashboard/         # 仪表盘
+├── components/            # React 组件
+│   ├── layouts/           # 响应式布局（PC/Mobile）
+│   └── hooks/             # 自定义 Hooks
+├── theme/                 # Ant Design 主题配置
+├── lib/                   # 工具库
+│   ├── supabase.ts        # Supabase 客户端
+│   ├── auth.ts            # 认证中间件
+│   └── status.ts          # 状态流转逻辑
+├── types/                 # TypeScript 类型
+├── supabase/              # Supabase 配置
+│   └── migrations/        # 数据库迁移
+├── volumes/               # Docker volumes
+│   └── api/
+│       └── kong.yml       # Kong API Gateway 配置
+├── docker-compose.yml     # Docker Compose 配置
+├── Dockerfile             # Next.js 应用镜像
+├── nginx.conf             # Nginx 反向代理配置
+└── .env.example           # 环境变量模板
+```
+
+## 核心服务
+
+### Supabase 全家桶
+
+- **PostgreSQL**：数据库（端口 5432）
+- **Kong**：API Gateway（端口 8000/8443）
+- **GoTrue**：认证服务
+- **PostgREST**：REST API
+- **Storage API**：文件存储
+- **Postgres Meta**：数据库管理 API
+- **Studio**：管理界面（通过 Nginx 路由到 /studio）
+
+### 应用服务
+
+- **Next.js App**：前端应用（端口 3000）
+- **Nginx**：反向代理（端口 80/443）
+
+## API 说明
+
+### 认证
+
+所有 API 请求需要在 Header 中包含：
+```
+Authorization: Bearer <ANON_KEY>
+```
+
+服务端 API 使用：
+```
+Authorization: Bearer <SERVICE_ROLE_KEY>
+```
+
+### 主要端点
+
+- `GET /api/articles` - 获取文章列表
+- `POST /api/articles` - 创建文章
+- `GET /api/articles/:id` - 获取文章详情
+- `PUT /api/articles/:id` - 更新文章
+- `DELETE /api/articles/:id` - 删除文章
+- `POST /api/articles/:id/images` - 上传图片
+- `GET /api/articles/:id/versions` - 版本历史
+- `PUT /api/articles/:id/status` - 状态流转
+- `POST /api/articles/:id/publish` - 发布到小红书
+
+## 数据库迁移
+
+数据库 schema 位于 `supabase/migrations/`：
+
+```
+supabase/migrations/
+├── 00_schema.sql          # 核心表结构
+├── 01_auth.sql            # 认证配置
+├── 02_storage.sql         # 存储桶配置
+└── 03_rls.sql             # Row Level Security
+```
+
+## 环境变量说明
+
+### 核心配置
+
+| 变量 | 说明 | 示例 |
+|------|------|------|
+| `POSTGRES_PASSWORD` | PostgreSQL 密码 | `super-secret-password` |
+| `JWT_SECRET` | JWT 签名密钥 | `openssl rand -base64 32` |
+| `ANON_KEY` | 匿名访问密钥 | 见 .env.example |
+| `SERVICE_ROLE_KEY` | 服务端密钥 | 见 .env.example |
+| `SUPABASE_PUBLIC_URL` | Supabase 公开 URL | `http://localhost:8000` |
+
+### 生产部署
+
+生产环境需要额外配置：
+
+1. 修改所有密钥和密码
+2. 设置正确的域名：
+   ```
+   SUPABASE_PUBLIC_URL=https://api.yourdomain.com
+   SITE_URL=https://yourdomain.com
+   ```
+3. 配置 SSL 证书（见 nginx.conf）
+4. 启用防火墙规则
+5. 配置邮件服务（用于认证邮件）
+
+## 常见问题
+
+### 1. 数据库连接失败
+
+确保 PostgreSQL 服务已启动：
+```bash
+docker compose ps db
+docker compose logs db
+```
+
+### 2. Kong Gateway 502 错误
+
+检查上游服务是否健康：
+```bash
+docker compose ps
+docker compose logs kong
+```
+
+### 3. Next.js 构建失败
+
+清理缓存并重新构建：
+```bash
+rm -rf .next node_modules
+npm install
+npm run build
+```
+
+### 4. 无法上传图片
+
+确保 Storage API 运行正常：
+```bash
+docker compose logs storage
+```
+
+## 测试
+
+运行端到端测试：
+```bash
+npm run test          # 运行所有测试
+npm run test:ui       # UI 模式
+npm run test:debug    # Debug 模式
+```
+
+## 许可证
+
+MIT
+
+## 相关文档
+
+- [Supabase 自托管文档](https://supabase.com/docs/guides/self-hosting/docker)
+- [Next.js 文档](https://nextjs.org/docs)
+- [Kong Gateway 配置](https://docs.konghq.com/)
