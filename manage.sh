@@ -486,7 +486,13 @@ cmd_uninstall() {
   echo ""
   read -rp "是否同时删除数据（volumes/ 目录和 Docker 数据卷）? (y/N): " del_data
   if [[ "$del_data" =~ ^[Yy]$ ]]; then
-    rm -rf volumes/
+    # DB 数据目录属主是容器内 postgres 用户，需要提权删除
+    if rm -rf volumes/ 2>/dev/null; then
+      true
+    else
+      warn "普通用户无权删除 DB 数据，需要 sudo"
+      sudo rm -rf volumes/
+    fi
     docker volume rm xiaohongshu-ops_db-config 2>/dev/null || true
     log "数据已删除"
   else
