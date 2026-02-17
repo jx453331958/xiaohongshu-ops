@@ -438,8 +438,7 @@ cmd_install() {
   fi
 
   # 3. 创建数据目录
-  mkdir -p volumes/db/data
-  mkdir -p volumes/storage
+  mkdir -p volumes/db/data volumes/db/config volumes/storage
 
   # 4. 拉取镜像
   info "拉取镜像..."
@@ -493,7 +492,6 @@ cmd_uninstall() {
       warn "普通用户无权删除 DB 数据，需要 sudo"
       sudo rm -rf volumes/
     fi
-    docker volume rm xiaohongshu-ops_db-config 2>/dev/null || true
     log "数据已删除"
   else
     info "保留数据目录"
@@ -550,8 +548,7 @@ cmd_init() {
   fi
 
   # 创建数据目录
-  mkdir -p volumes/db/data
-  mkdir -p volumes/storage
+  mkdir -p volumes/db/data volumes/db/config volumes/storage
 
   log "初始化完成！"
   echo ""
