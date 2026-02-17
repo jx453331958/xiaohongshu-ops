@@ -408,12 +408,16 @@ ENVEOF
   log "配置文件已生成: .env"
   echo ""
   echo -e "${CYAN}━━━ 请保存以下凭据 ━━━${NC}"
-  echo -e "  ${YELLOW}API 鉴权 Token:${NC}  ${api_token}"
-  echo -e "  ${YELLOW}Studio 密码:${NC}     ${dash_pass}"
   echo ""
-  warn "如果丢失以上凭据，可在 .env 文件中查看"
-  warn "  API Token:    查看 API_AUTH_TOKEN"
-  warn "  Studio 密码:  查看 DASHBOARD_PASSWORD"
+  echo -e "  ${YELLOW}API Token:${NC}       ${api_token}"
+  echo -e "  用途: 调用后台 API 和 MCP 接口时的 Bearer Token"
+  echo ""
+  echo -e "  ${YELLOW}Studio 账号:${NC}     ${dash_user} / ${dash_pass}"
+  echo -e "  用途: 登录 Supabase Studio 数据库管理界面"
+  echo ""
+  warn "如果丢失以上凭据，可在 .env 文件中查看:"
+  warn "  API Token   → API_AUTH_TOKEN"
+  warn "  Studio 密码 → DASHBOARD_PASSWORD"
 }
 
 # 显示访问地址
@@ -437,9 +441,10 @@ show_access_info() {
   info "Supabase API:    http://localhost:${kong_port}"
   info "数据库:          localhost:${db_port}"
   echo ""
-  echo -e "${CYAN}━━━ API 鉴权 ━━━${NC}"
-  info "Token: ${api_token}"
-  info "丢失可在 .env 中查看 API_AUTH_TOKEN"
+  echo -e "${CYAN}━━━ 凭据 ━━━${NC}"
+  info "API Token (调用后台 API / MCP 接口): ${api_token}"
+  info "Studio 账号 (数据库管理界面): $(get_env_var DASHBOARD_USERNAME) / $(get_env_var DASHBOARD_PASSWORD)"
+  info "丢失可在 .env 中查看 API_AUTH_TOKEN / DASHBOARD_PASSWORD"
 }
 
 # ============================================================
