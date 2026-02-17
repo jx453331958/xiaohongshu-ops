@@ -51,37 +51,35 @@ cmd_init() {
 
   # 生成 .env
   if [[ ! -f .env ]]; then
-    info "生成 .env 配置文件..."
-    cp .env.example .env
+    if [[ -f .env.example ]]; then
+      info "生成 .env 配置文件..."
+      cp .env.example .env
 
-    # 生成随机密码和密钥
-    local pg_pass
-    pg_pass=$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)
-    local jwt_secret
-    jwt_secret=$(openssl rand -base64 32)
+      # 生成随机密码和密钥
+      local pg_pass
+      pg_pass=$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)
+      local jwt_secret
+      jwt_secret=$(openssl rand -base64 32)
 
-    # 替换默认值
-    sed -i.bak "s|your-super-secret-and-long-postgres-password|${pg_pass}|g" .env
-    sed -i.bak "s|your-super-secret-jwt-token-with-at-least-32-characters-long|${jwt_secret}|g" .env
-    rm -f .env.bak
+      # 替换默认值
+      sed -i.bak "s|your-super-secret-and-long-postgres-password|${pg_pass}|g" .env
+      sed -i.bak "s|your-super-secret-jwt-token-with-at-least-32-characters-long|${jwt_secret}|g" .env
+      rm -f .env.bak
 
-    log "已生成 .env（PostgreSQL 密码和 JWT 密钥已随机生成）"
-    warn "默认使用 Supabase Demo 的 ANON_KEY 和 SERVICE_ROLE_KEY"
-    warn "生产环境请用你自己的 JWT_SECRET 重新生成 API Keys"
+      log "已生成 .env（PostgreSQL 密码和 JWT 密钥已随机生成）"
+      warn "默认使用 Supabase Demo 的 ANON_KEY 和 SERVICE_ROLE_KEY"
+      warn "生产环境请用你自己的 JWT_SECRET 重新生成 API Keys"
+    else
+      err "缺少 .env.example，请手动创建 .env 文件"
+      exit 1
+    fi
   else
     warn ".env 已存在，跳过"
   fi
 
-  # 创建必要目录
-  mkdir -p volumes/api
-  mkdir -p volumes/db
-  mkdir -p public/uploads
-
-  # 检查 Kong 配置
-  if [[ ! -f volumes/api/kong.yml ]]; then
-    err "缺少 volumes/api/kong.yml，请确保项目文件完整"
-    exit 1
-  fi
+  # 创建数据目录
+  mkdir -p volumes/db/data
+  mkdir -p volumes/storage
 
   log "初始化完成！"
   echo ""
@@ -158,14 +156,11 @@ cmd_logs() {
 # ============================================================
 cmd_update() {
   check_deps
-  info "拉取最新代码..."
-  git pull origin main
-
   info "拉取最新镜像..."
-  compose pull app mcp
+  compose pull
 
-  info "重启应用和 MCP..."
-  compose up -d --no-deps app mcp
+  info "重启服务..."
+  compose up -d
 
   log "更新完成！"
 }
@@ -309,7 +304,7 @@ ${YELLOW}基础命令:${NC}
   health      健康检查
 
 ${YELLOW}开发命令:${NC}
-  update      拉取最新代码并重新部署
+  update      拉取最新镜像并重新部署
   reload      仅重启应用（不动数据库）
   logs [服务]  查看日志（可指定服务名）
 

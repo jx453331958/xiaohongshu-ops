@@ -47,13 +47,11 @@ services:
   # Kong - API Gateway
   kong:
     container_name: supabase-kong
-    image: kong:2.8.1
+    image: ghcr.io/jx453331958/xiaohongshu-ops/kong:latest
     restart: unless-stopped
     ports:
       - ${KONG_HTTP_PORT}:8000/tcp
       - ${KONG_HTTPS_PORT}:8443/tcp
-    volumes:
-      - ./volumes/api/kong.yml:/home/kong/temp.yml:ro,z
     depends_on:
       db:
         condition: service_healthy
@@ -236,16 +234,9 @@ services:
   # Database - PostgreSQL with Supabase extensions
   db:
     container_name: supabase-db
-    image: supabase/postgres:15.8.1.085
+    image: ghcr.io/jx453331958/xiaohongshu-ops/db:latest
     restart: unless-stopped
     volumes:
-      # Official init scripts (roles, webhooks, jwt, etc.)
-      - ./volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
-      - ./volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
-      - ./volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
-      # Our custom schema (will run after official init)
-      - ./supabase/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/migrations/100-initial-schema.sql:Z
-      # Data persistence
       - ./volumes/db/data:/var/lib/postgresql/data:Z
       - db-config:/etc/postgresql-custom
     healthcheck:
@@ -310,7 +301,7 @@ services:
   # Nginx - Reverse proxy
   nginx:
     container_name: xhs-ops-nginx
-    image: nginx:alpine
+    image: ghcr.io/jx453331958/xiaohongshu-ops/nginx:latest
     restart: unless-stopped
     depends_on:
       - app
@@ -319,8 +310,6 @@ services:
       - mcp
     ports:
       - "${NGINX_PORT}:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
 
 volumes:
   db-config:

@@ -1,7 +1,8 @@
 node_modules
 .next
 .git
-volumes
+volumes/db/data
+volumes/storage
 .env
 .env.local
 .env.*.local
