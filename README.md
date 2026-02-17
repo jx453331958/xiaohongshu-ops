@@ -26,23 +26,22 @@
 
 ### 一键部署（Docker Compose）
 
-1. **克隆仓库**
-   ```bash
-   git clone <repo-url>
-   cd xiaohongshu-ops
-   ```
+所有服务已打包为 Docker 镜像，部署只需下载两个文件：
 
-2. **一键安装**
-   ```bash
-   ./manage.sh install
-   # 按提示完成配置（品牌名称、端口等，回车使用默认值）
-   # 密钥自动生成，无需手动编辑 .env
-   ```
+```bash
+mkdir xiaohongshu-ops && cd xiaohongshu-ops
+curl -LO https://raw.githubusercontent.com/jx453331958/xiaohongshu-ops/main/docker-compose.yml
+curl -LO https://raw.githubusercontent.com/jx453331958/xiaohongshu-ops/main/manage.sh
+chmod +x manage.sh
+./manage.sh install
+```
 
-3. **访问应用**
-   - 应用首页：http://localhost:3001
-   - Supabase Studio：http://localhost:8080/studio/
-   - Supabase API：http://localhost:8001
+按提示完成配置（品牌名称、端口等，回车使用默认值），密钥全部自动生成。
+
+安装完成后访问：
+- 应用首页：http://localhost:3001
+- Supabase Studio：http://localhost:8080/studio/
+- Supabase API：http://localhost:8001
 
 如需重新配置，运行 `./manage.sh config`。
 
