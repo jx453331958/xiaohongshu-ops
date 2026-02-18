@@ -20,7 +20,10 @@ argument-hint: "[操作描述，如：列出所有草稿、创建一篇关于AI�
   "mcpServers": {
     "xiaohongshu-ops": {
       "type": "streamable-http",
-      "url": "{{MCP_URL}}/mcp"
+      "url": "{{MCP_URL}}/mcp",
+      "headers": {
+        "Authorization": "Bearer <你的 API_AUTH_TOKEN>"
+      }
     }
   }
 }
