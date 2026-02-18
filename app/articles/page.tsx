@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/use-auth';
 import { apiRequest } from '@/lib/api-client';
 import { Article } from '@/types/article';
-import { Table, Button, Input, Select, Space, List, Card, Spin, Modal, App, Typography } from 'antd';
+import { Table, Button, Input, Space, List, Card, Spin, Modal, App, Typography, Segmented } from 'antd';
 import { PlusOutlined, SearchOutlined, FileTextOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { AppLayout } from '@/components/app-layout';
@@ -16,14 +16,23 @@ import { PageHeader } from '@/components/mobile-page-header';
 
 const { Title, Text } = Typography;
 
-const statusOptions = [
-  { value: '', label: '全部状态' },
-  { value: 'draft', label: '草稿' },
-  { value: 'pending_render', label: '待渲染' },
+const statusFilterOptions = [
+  { value: '', label: '全部' },
   { value: 'pending_review', label: '待审核' },
+  { value: 'pending_render', label: '待渲染' },
+  { value: 'draft', label: '草稿' },
   { value: 'published', label: '已发布' },
   { value: 'archived', label: '已归档' },
 ];
+
+// 状态排序优先级（数字越小越靠前）
+const STATUS_PRIORITY: Record<string, number> = {
+  pending_review: 0,
+  pending_render: 1,
+  draft: 2,
+  published: 3,
+  archived: 4,
+};
 
 export default function ArticlesPage() {
   const router = useRouter();
@@ -37,6 +46,16 @@ export default function ArticlesPage() {
   const [createTitle, setCreateTitle] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  // 按状态优先级排序，同状态内按更新时间倒序
+  const sortedArticles = useMemo(() => {
+    return [...articles].sort((a, b) => {
+      const pa = STATUS_PRIORITY[a.status] ?? 99;
+      const pb = STATUS_PRIORITY[b.status] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+  }, [articles]);
 
   useEffect(() => {
     if (!ready) return;
@@ -155,21 +174,24 @@ export default function ArticlesPage() {
         )}
 
         {isMobile ? (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <div style={{ marginBottom: 12 }}>
             <Input.Search
               placeholder="搜索标题或内容..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onSearch={handleSearch}
-              style={{ flex: 1 }}
+              style={{ marginBottom: 8 }}
               allowClear
             />
-            <Select
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={statusOptions}
-              style={{ width: 100 }}
-            />
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <Segmented
+                value={statusFilter}
+                onChange={(val) => setStatusFilter(val as string)}
+                options={statusFilterOptions}
+                size="small"
+                block
+              />
+            </div>
           </div>
         ) : (
           <Card style={{ marginBottom: 16 }}>
@@ -182,11 +204,10 @@ export default function ArticlesPage() {
                 style={{ width: 300 }}
                 allowClear
               />
-              <Select
+              <Segmented
                 value={statusFilter}
-                onChange={setStatusFilter}
-                options={statusOptions}
-                style={{ width: 140 }}
+                onChange={(val) => setStatusFilter(val as string)}
+                options={statusFilterOptions}
               />
             </Space>
           </Card>
@@ -195,7 +216,7 @@ export default function ArticlesPage() {
         {isMobile ? (
           <List
             loading={loading}
-            dataSource={articles}
+            dataSource={sortedArticles}
             locale={{ emptyText: <div style={{ padding: 40 }}><FileTextOutlined style={{ fontSize: 48, color: '#7A6F8A', display: 'block', marginBottom: 16 }} />暂无文章</div> }}
             renderItem={(article) => (
               <Link href={`/articles/${article.id}`} style={{ display: 'block', marginBottom: 8 }}>
@@ -222,7 +243,7 @@ export default function ArticlesPage() {
           <Card>
             <Table
               columns={columns}
-              dataSource={articles}
+              dataSource={sortedArticles}
               rowKey="id"
               loading={loading}
               pagination={false}
