@@ -3,103 +3,94 @@ name: xiaohongshu-ops
 description: >
   管理小红书内容运营平台的文章。当用户提到创建文章、查看文章列表、
   修改文章状态、发布到小红书、管理图片、查看版本历史等操作时触发。
-  通过 MCP Server 调用 xiaohongshu-ops API。
+  通过 REST API 调用 xiaohongshu-ops 后台。
 argument-hint: "[操作描述，如：列出所有草稿、创建一篇关于AI工具的文章]"
 ---
 
 # 小红书内容运营
 
-通过 xiaohongshu-ops MCP Server 管理小红书账号的内容创作、审核和发布流程。
+通过 xiaohongshu-ops REST API 管理小红书账号的内容创作、审核和发布流程。
 
-## 快速配置
+## 连接信息
 
-将以下内容添加到项目的 \`.mcp.json\`：
+- **API 地址**: \`{{MCP_URL}}/api\`
+- **认证方式**: 所有请求需携带 \`Authorization: Bearer <API_AUTH_TOKEN>\` 请求头
+- **Content-Type**: JSON 请求使用 \`application/json\`，图片上传使用 \`multipart/form-data\`
 
-\`\`\`json
-{
-  "mcpServers": {
-    "xiaohongshu-ops": {
-      "type": "streamable-http",
-      "url": "{{MCP_URL}}/mcp",
-      "headers": {
-        "Authorization": "Bearer <你的 API_AUTH_TOKEN>"
-      }
-    }
-  }
-}
-\`\`\`
-
-## 可用工具
+## API 接口
 
 ### 文章 CRUD
 
-#### list_articles — 获取文章列表
-
-支持按状态、标签、分类、关键词筛选和分页。
+#### 获取文章列表
 
 \`\`\`
-list_articles(status="draft", limit=10)
-list_articles(search="AI工具", tag="教程")
+GET /api/articles?status=draft&tag=AI&category=教程&search=关键词&limit=20&offset=0
 \`\`\`
 
-参数：
-- \`status\`（可选）：draft / pending_render / pending_review / published / archived
-- \`tag\`（可选）：按标签筛选
-- \`category\`（可选）：按分类筛选
-- \`search\`（可选）：按标题或内容搜索
-- \`limit\`（可选，默认 20）：每页条数
-- \`offset\`（可选，默认 0）：偏移量
+参数（均为可选）：
+- \`status\`: draft / pending_render / pending_review / published / archived
+- \`tag\`: 按标签筛选
+- \`category\`: 按分类筛选
+- \`search\`: 按标题或内容模糊搜索
+- \`limit\`（默认 50）/ \`offset\`（默认 0）: 分页
 
-#### create_article — 创建新文章
-
-创建草稿状态的文章，同时自动生成 v1 版本。
+#### 创建文章
 
 \`\`\`
-create_article(title="5个AI工具推荐", content="# 正文\\n...", tags=["AI", "工具"], category="AI工具")
+POST /api/articles
+Content-Type: application/json
+
+{"title": "标题", "content": "Markdown 正文", "tags": ["AI", "工具"], "category": "分类"}
 \`\`\`
 
-参数：
-- \`title\`（必填）：文章标题
-- \`content\`（可选）：Markdown 正文
-- \`tags\`（可选）：标签数组
-- \`category\`（可选）：分类名
+- \`title\`（必填），其余可选
+- 新文章初始状态为 \`draft\`，自动创建 v1 版本
 
-#### get_article — 获取文章详情
+#### 获取文章详情
 
 \`\`\`
-get_article(article_id="uuid")
+GET /api/articles/:id
 \`\`\`
 
-#### update_article — 更新文章
-
-修改标题或正文会自动创建新版本。只传需要更新的字段。
+#### 更新文章
 
 \`\`\`
-update_article(article_id="uuid", title="新标题", content="新正文")
+PUT /api/articles/:id
+Content-Type: application/json
+
+{"title": "新标题", "content": "新正文", "tags": ["新标签"], "category": "新分类"}
 \`\`\`
 
-#### delete_article — 删除文章
+只传需要更新的字段。修改 title 或 content 会自动创建新版本。
+
+#### 删除文章
+
+\`\`\`
+DELETE /api/articles/:id
+\`\`\`
 
 不可恢复，关联的版本、图片、统计数据一并删除。
 
-\`\`\`
-delete_article(article_id="uuid")
-\`\`\`
-
 ### 状态管理
 
-#### get_article_status — 获取当前状态和允许的流转
+#### 获取当前状态和允许的流转
 
 \`\`\`
-get_article_status(article_id="uuid")
+GET /api/articles/:id/status
 \`\`\`
 
-返回当前状态和允许的下一步状态列表。
+返回示例：
+\`\`\`json
+{"current_status": "draft", "allowed_next_statuses": ["pending_render", "archived"]}
+\`\`\`
 
-#### update_article_status — 更新文章状态
+#### 更新文章状态
 
 \`\`\`
-update_article_status(article_id="uuid", status="pending_render")
+PUT /api/articles/:id/status
+Content-Type: application/json
+
+{"status": "pending_render"}
 \`\`\`
 
 **状态流转规则：**
@@ -114,46 +105,44 @@ update_article_status(article_id="uuid", status="pending_render")
 
 ### 发布
 
-#### publish_article — 发布到小红书
-
-记录小红书 note_id，自动将状态设为 published。
+#### 发布到小红书
 
 \`\`\`
-publish_article(article_id="uuid", xhs_note_id="note_abc123")
-publish_article(article_id="uuid", xhs_note_id="note_abc123", views=100, likes=50)
+POST /api/articles/:id/publish
+Content-Type: application/json
+
+{"xhs_note_id": "note_abc123", "views": 0, "likes": 0, "favorites": 0, "comments": 0}
 \`\`\`
 
-参数：
-- \`article_id\`（必填）：文章 UUID
-- \`xhs_note_id\`（必填）：小红书笔记 ID
-- \`views / likes / favorites / comments\`（可选）：初始统计数据
+- \`xhs_note_id\`（必填），统计字段可选
+- 自动将状态设为 published
 
 ### 图片管理
 
-#### list_article_images — 获取文章图片列表
+#### 获取文章图片列表
 
 \`\`\`
-list_article_images(article_id="uuid")
+GET /api/articles/:id/images
 \`\`\`
 
 按 sort_order 升序返回。
 
-#### delete_article_image — 删除图片
+#### 删除图片
+
+\`\`\`
+DELETE /api/articles/:id/images?image_id=<image-uuid>
+\`\`\`
 
 同时删除存储文件和数据库记录。
-
-\`\`\`
-delete_article_image(article_id="uuid", image_id="image-uuid")
-\`\`\`
 
 > 注意：图片上传需通过 Web UI 完成，LLM 无法提供二进制文件。
 
 ### 版本历史
 
-#### get_article_versions — 获取版本历史
+#### 获取版本历史
 
 \`\`\`
-get_article_versions(article_id="uuid")
+GET /api/articles/:id/versions
 \`\`\`
 
 按版本号倒序（最新在前）。每次修改标题或正文时自动生成新版本。
@@ -162,27 +151,27 @@ get_article_versions(article_id="uuid")
 
 ### 创建到发布的完整流程
 
-1. **创建草稿** → \`create_article(title, content, tags, category)\`
+1. **创建草稿** → \`POST /api/articles\`
 2. **上传图片** → 通过 Web UI 上传 slide 图片
-3. **提交渲染** → \`update_article_status(article_id, status="pending_render")\`
-4. **渲染完成，提交审核** → \`update_article_status(article_id, status="pending_review")\`
-5. **审核通过，发布** → \`publish_article(article_id, xhs_note_id="...")\`
+3. **提交渲染** → \`PUT /api/articles/:id/status\` body: \`{"status":"pending_render"}\`
+4. **渲染完成，提交审核** → \`PUT /api/articles/:id/status\` body: \`{"status":"pending_review"}\`
+5. **审核通过，发布** → \`POST /api/articles/:id/publish\` body: \`{"xhs_note_id":"..."}\`
 
-### 常见操作
+### 常见操作示例
 
-**查看待处理的文章：**
+**查看待审核文章：**
 \`\`\`
-list_articles(status="pending_review")
+GET /api/articles?status=pending_review
 \`\`\`
 
-**批量查看所有草稿：**
+**查看所有草稿：**
 \`\`\`
-list_articles(status="draft")
+GET /api/articles?status=draft
 \`\`\`
 
 **退回重写：**
 \`\`\`
-update_article_status(article_id, status="draft")
+PUT /api/articles/:id/status  body: {"status":"draft"}
 \`\`\`
 
 ## 呈现规范
@@ -194,9 +183,9 @@ update_article_status(article_id, status="draft")
 
 ## 错误处理
 
-- 文章不存在时提示用户检查 ID
-- 状态流转被拒绝时，说明当前状态和允许的目标状态
-- API 连接失败时，提示检查 MCP Server 是否正常运行（\`/health\` 端点）
+- 401: Token 无效或缺失，检查 Authorization 请求头
+- 404: 文章不存在，提示用户检查 ID
+- 400: 请求参数错误（如不允许的状态流转），返回体中有具体说明
 `;
 
 export function getSkillMarkdown(mcpUrl: string): string {
