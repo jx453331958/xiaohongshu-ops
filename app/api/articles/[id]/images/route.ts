@@ -98,17 +98,15 @@ export const POST = withAuth(async (req: NextRequest, context: RouteContext) => 
 
     if (uploadError) throw uploadError;
 
-    // 获取公开 URL
-    const { data: urlData } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(fileName);
+    // 使用应用内代理路由作为图片 URL（避免暴露 Docker 内部地址）
+    const imageUrl = `/api/images/${fileName}`;
 
     // 保存到数据库
     const { data: imageRecord, error: dbError } = await supabase
       .from('article_images')
       .insert({
         article_id: id,
-        url: urlData.publicUrl,
+        url: imageUrl,
         storage_path: fileName,
         sort_order: sortOrder,
       })
