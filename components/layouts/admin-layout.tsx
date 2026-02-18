@@ -69,7 +69,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <span style={{
             fontSize: collapsed ? 18 : 20,
             fontWeight: 700,
-            fontFamily: "'Fraunces', 'Noto Serif SC', serif",
+            fontFamily: "var(--font-display)",
             background: 'linear-gradient(135deg, #FF2442, #FF6B8A)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',

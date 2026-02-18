@@ -75,7 +75,7 @@ export default function LoginPage() {
             <LoginOutlined />
           </div>
           <h1 style={{
-            fontFamily: "'Fraunces', 'Noto Serif SC', serif",
+            fontFamily: "var(--font-display)",
             fontSize: 32,
             fontWeight: 700,
             margin: '0 0 8px',

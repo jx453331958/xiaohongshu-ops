@@ -16,7 +16,7 @@ const antdTheme: ThemeConfig = {
     colorTextSecondary: '#B4A9C3',
     colorTextTertiary: '#7A6F8A',
     colorTextQuaternary: '#5a5068',
-    fontFamily: "'Outfit', 'Noto Sans SC', sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif",
     borderRadius: 8,
     colorLink: '#FF2442',
     colorSuccess: '#10B981',
