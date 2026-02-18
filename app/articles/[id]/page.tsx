@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/use-auth';
 import { apiRequest, uploadFile } from '@/lib/api-client';
 import { Article, ArticleImage, ArticleStatus } from '@/types/article';
-import { Button, Input, Card, Tabs, Space, Modal, Upload, Spin, Typography, App } from 'antd';
+import { Button, Input, Card, Tabs, Space, Modal, Upload, Spin, Typography, App, Image } from 'antd';
 import {
   SaveOutlined,
   ArrowLeftOutlined,
@@ -309,7 +309,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
               key={image.id}
               cover={
                 <div style={{ aspectRatio: '1', overflow: 'hidden', background: '#252032' }}>
-                  <img
+                  <Image
                     src={image.url}
                     alt="文章图片"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}

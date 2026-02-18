@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { Image } from 'antd';
 
 interface XhsMarkdownPreviewProps {
   source: string;
@@ -32,13 +33,15 @@ export function XhsMarkdownPreview({ source, images = [] }: XhsMarkdownPreviewPr
 
       {/* 图片轮播区（如果有图片） */}
       {images.length > 0 && (
-        <div className="xhs-preview-images">
-          {images.map((img) => (
-            <div key={img.id} className="xhs-preview-image-item">
-              <img src={img.url} alt="" loading="lazy" />
-            </div>
-          ))}
-        </div>
+        <Image.PreviewGroup>
+          <div className="xhs-preview-images">
+            {images.map((img) => (
+              <div key={img.id} className="xhs-preview-image-item">
+                <Image src={img.url} alt="" loading="lazy" />
+              </div>
+            ))}
+          </div>
+        </Image.PreviewGroup>
       )}
 
       {/* 正文内容 */}
