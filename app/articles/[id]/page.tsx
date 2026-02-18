@@ -125,10 +125,27 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleDownloadImage = (url: string) => {
+  const handleDownloadImage = async (url: string) => {
+    const filename = url.split('/').pop() || 'image.png';
+    // iOS: 用 Web Share API 让用户存入相册
+    if (navigator.share && navigator.canShare) {
+      try {
+        const res = await fetch(`${url}?download=1`);
+        const blob = await res.blob();
+        const file = new File([blob], filename, { type: blob.type });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+      } catch (e: any) {
+        // 用户取消分享不报错
+        if (e?.name === 'AbortError') return;
+      }
+    }
+    // 其他平台: <a download> 触发浏览器下载
     const a = document.createElement('a');
     a.href = `${url}?download=1`;
-    a.download = '';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -136,7 +153,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   const handleDownloadAll = async () => {
     for (let i = 0; i < images.length; i++) {
-      handleDownloadImage(images[i].url);
+      await handleDownloadImage(images[i].url);
       if (i < images.length - 1) {
         await new Promise(r => setTimeout(r, 300));
       }
