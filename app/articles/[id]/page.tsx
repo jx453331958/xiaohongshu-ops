@@ -408,6 +408,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
               <Button icon={<ArrowLeftOutlined />} type="text" style={{ minWidth: 44, minHeight: 44 }} />
             </Link>
             <StatusTag status={article.status} />
+            <Text type="secondary" copyable={{ text: id, tooltips: ['复制 ID', '已复制'] }} style={{ fontSize: 12 }}>
+              {id.slice(0, 8)}
+            </Text>
             {!isMobile && <Text strong ellipsis style={{ maxWidth: 300 }}>{title}</Text>}
           </Space>
           <Space>
