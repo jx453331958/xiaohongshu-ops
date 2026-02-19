@@ -20,6 +20,7 @@ import {
   PictureOutlined,
   UploadOutlined,
   CodeOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
 import { AppLayout } from '@/components/app-layout';
@@ -588,6 +589,19 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             {!isMobile && <Text strong ellipsis style={{ maxWidth: 300 }}>{title}</Text>}
           </Space>
           <Space>
+            <Button
+              icon={<CopyOutlined />}
+              type="text"
+              style={{ minWidth: 44, minHeight: 44 }}
+              onClick={() => {
+                navigator.clipboard.writeText(content).then(
+                  () => message.success('正文已复制'),
+                  () => message.error('复制失败'),
+                );
+              }}
+            >
+              {!isMobile && '复制正文'}
+            </Button>
             <Link href={`/articles/${id}/versions`}>
               <Button icon={<HistoryOutlined />} type="text" style={{ minWidth: 44, minHeight: 44 }}>
                 {!isMobile && '版本'}
