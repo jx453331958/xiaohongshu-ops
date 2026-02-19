@@ -121,7 +121,7 @@ export const POST = withAuth(async (req: NextRequest, context: RouteContext) => 
       .from(BUCKET_NAME)
       .upload(htmlPath, new Blob([htmlContent], { type: 'text/html' }), {
         contentType: 'text/html',
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) throw uploadError;
