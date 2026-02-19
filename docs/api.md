@@ -94,6 +94,8 @@ draft → pending_render → pending_review → published → archived
 | article_id | UUID | 关联文章 ID |
 | url | string | 图片公开访问 URL |
 | storage_path | string \| null | Supabase Storage 内部路径 |
+| html_url | string \| null | HTML 源文件公开访问 URL |
+| html_storage_path | string \| null | HTML 源文件 Storage 路径 |
 | sort_order | number | 排序序号（升序） |
 | created_at | ISO 8601 | 创建时间 |
 
@@ -469,7 +471,7 @@ POST /api/articles/:id/images
 }
 ```
 
-文件存储路径格式: `{article_id}/{timestamp}-{random}.{extension}`
+文件存储路径格式: `{article_id}/{uuid}.{extension}`
 
 **错误:**
 
@@ -517,7 +519,7 @@ DELETE /api/articles/:id/images?image_id=<image-uuid>
 }
 ```
 
-同时删除 Supabase Storage 中的文件和数据库记录。
+同时删除 Supabase Storage 中的文件（PNG + HTML）和数据库记录。
 
 **错误:**
 
@@ -528,7 +530,173 @@ DELETE /api/articles/:id/images?image_id=<image-uuid>
 
 ---
 
-### 12. 获取文章版本历史
+### 12. 上传图片 HTML 源文件
+
+```
+POST /api/articles/:id/images/:imageId/html
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 文章 ID |
+| imageId | UUID | 图片 ID |
+
+**请求体（二选一）:**
+
+JSON 格式:
+
+```json
+{
+  "html": "<html>...</html>"
+}
+```
+
+或 multipart/form-data:
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| file | File | 是 | HTML 文件 |
+
+**响应: 201**
+
+```json
+{
+  "data": ArticleImage
+}
+```
+
+HTML 存储路径与图片共享相同 UUID: `{article_id}/{uuid}.html`
+
+**错误:**
+
+| 状态码 | 说明 |
+|--------|------|
+| 400 | 图片已有 HTML 源文件（应使用 PUT 更新） |
+| 404 | 图片不存在 |
+
+---
+
+### 13. 获取图片 HTML 源文件
+
+```
+GET /api/articles/:id/images/:imageId/html
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 文章 ID |
+| imageId | UUID | 图片 ID |
+
+**响应: 200**
+
+```json
+{
+  "data": {
+    "image_id": "uuid",
+    "html_url": "/api/images/article-id/uuid.html",
+    "html_storage_path": "article-id/uuid.html",
+    "html_content": "<html>...</html>"
+  }
+}
+```
+
+**错误:**
+
+| 状态码 | 说明 |
+|--------|------|
+| 404 | 图片不存在或没有关联的 HTML 源文件 |
+
+---
+
+### 14. 更新图片 HTML 源文件
+
+```
+PUT /api/articles/:id/images/:imageId/html
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 文章 ID |
+| imageId | UUID | 图片 ID |
+
+**请求体（二选一）:**
+
+JSON 格式:
+
+```json
+{
+  "html": "<html>新内容</html>"
+}
+```
+
+或 multipart/form-data:
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| file | File | 是 | HTML 文件 |
+
+**响应: 200**
+
+```json
+{
+  "data": {
+    "image_id": "uuid",
+    "html_url": "/api/images/article-id/uuid.html",
+    "html_storage_path": "article-id/uuid.html",
+    "message": "HTML 已更新"
+  }
+}
+```
+
+**错误:**
+
+| 状态码 | 说明 |
+|--------|------|
+| 400 | 图片没有 HTML 源文件（应使用 POST 创建） |
+| 404 | 图片不存在 |
+
+---
+
+### 15. 删除图片 HTML 源文件
+
+```
+DELETE /api/articles/:id/images/:imageId/html
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 文章 ID |
+| imageId | UUID | 图片 ID |
+
+**响应: 200**
+
+```json
+{
+  "data": {
+    "message": "HTML 源文件已删除"
+  }
+}
+```
+
+仅删除 HTML 文件，保留图片本身。
+
+**错误:**
+
+| 状态码 | 说明 |
+|--------|------|
+| 404 | 图片不存在或没有 HTML 源文件 |
+
+---
+
+### 16. 获取文章版本历史
 
 ```
 GET /api/articles/:id/versions
@@ -562,7 +730,7 @@ GET /api/articles/:id/versions
 
 ---
 
-### 13. 图片代理
+### 17. 图片/文件代理
 
 ```
 GET /api/images/{path}
@@ -578,7 +746,7 @@ GET /api/images/{path}
 
 **响应: 200**
 
-- **Content-Type**: 根据文件类型自动判断，默认 `image/png`
+- **Content-Type**: 根据文件扩展名自动判断（`.png` → `image/png`，`.html` → `text/html` 等）
 - **Cache-Control**: `public, max-age=31536000, immutable`（缓存 1 年）
 - **Body**: 二进制图片数据
 
@@ -612,33 +780,46 @@ ARTICLE=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 ID=$(echo $ARTICLE | jq -r '.data.id')
 
 # 2. 上传图片（多张 slide）
-curl -X POST -H "Authorization: Bearer $TOKEN" \
+IMG1=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" \
   -F "file=@slide1.png" -F "sort_order=1" \
-  "$BASE/articles/$ID/images"
+  "$BASE/articles/$ID/images")
+IMG1_ID=$(echo $IMG1 | jq -r '.data.id')
+
+IMG2=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  -F "file=@slide2.png" -F "sort_order=2" \
+  "$BASE/articles/$ID/images")
+IMG2_ID=$(echo $IMG2 | jq -r '.data.id')
+
+# 3. 上传 HTML 源文件（与图片一一对应）
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"html":"<html>slide1 源文件</html>"}' \
+  "$BASE/articles/$ID/images/$IMG1_ID/html"
 
 curl -X POST -H "Authorization: Bearer $TOKEN" \
-  -F "file=@slide2.png" -F "sort_order=2" \
-  "$BASE/articles/$ID/images"
+  -H "Content-Type: application/json" \
+  -d '{"html":"<html>slide2 源文件</html>"}' \
+  "$BASE/articles/$ID/images/$IMG2_ID/html"
 
-# 3. 流转到待渲染
+# 4. 流转到待渲染
 curl -X PUT -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status":"pending_render"}' \
   "$BASE/articles/$ID/status"
 
-# 4. 渲染完成，流转到待审核
+# 5. 渲染完成，流转到待审核
 curl -X PUT -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status":"pending_review"}' \
   "$BASE/articles/$ID/status"
 
-# 5. 审核通过，发布到小红书
+# 6. 审核通过，发布到小红书
 curl -X POST -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"xhs_note_id":"note_abc123"}' \
   "$BASE/articles/$ID/publish"
 
-# 6. 查看版本历史
+# 7. 查看版本历史
 curl -H "Authorization: Bearer $TOKEN" \
   "$BASE/articles/$ID/versions"
 ```
@@ -684,6 +865,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 | article_id | UUID | FK → articles(id) ON DELETE CASCADE | - |
 | url | TEXT | NOT NULL | - |
 | storage_path | TEXT | - | NULL |
+| html_url | TEXT | - | NULL |
+| html_storage_path | TEXT | - | NULL |
 | sort_order | INT | - | 0 |
 | created_at | TIMESTAMPTZ | - | now() |
 

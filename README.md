@@ -137,6 +137,10 @@ Authorization: Bearer <API_AUTH_TOKEN>
 - `PUT /api/articles/:id` - 更新文章
 - `DELETE /api/articles/:id` - 删除文章
 - `POST /api/articles/:id/images` - 上传图片
+- `POST /api/articles/:id/images/:imageId/html` - 上传图片 HTML 源文件
+- `GET /api/articles/:id/images/:imageId/html` - 获取 HTML 源文件
+- `PUT /api/articles/:id/images/:imageId/html` - 更新 HTML 源文件
+- `DELETE /api/articles/:id/images/:imageId/html` - 删除 HTML 源文件
 - `GET /api/articles/:id/versions` - 版本历史
 - `PUT /api/articles/:id/status` - 状态流转
 - `POST /api/articles/:id/publish` - 发布到小红书
@@ -147,9 +151,11 @@ Authorization: Bearer <API_AUTH_TOKEN>
 
 ```
 supabase/migrations/
-├── 001_initial_schema.sql        # 核心表结构（articles, versions, images, stats）
-├── 002_enable_rls.sql            # Row Level Security
-└── 003_create_storage_bucket.sql # 创建图片存储桶
+├── 001_initial_schema.sql           # 核心表结构（articles, versions, images, stats）
+├── 002_enable_rls.sql               # Row Level Security
+├── 003_create_storage_bucket.sql    # 创建图片存储桶
+├── 004_add_html_to_images.sql       # 图片 HTML 源文件字段
+└── 005_update_bucket_mime_types.sql # 存储桶允许 HTML 类型
 ```
 
 执行迁移：`./manage.sh db migrate`（`./manage.sh update` 会自动执行）

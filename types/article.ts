@@ -26,6 +26,8 @@ export interface ArticleImage {
   article_id: string;
   url: string;
   storage_path: string | null;
+  html_url: string | null;
+  html_storage_path: string | null;
   sort_order: number;
   created_at: string;
 }

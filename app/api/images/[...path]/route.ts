@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 
+const MIME_BY_EXT: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.html': 'text/html',
+};
+
+function getMimeType(filename: string, blobType?: string): string {
+  if (blobType && blobType !== 'application/octet-stream') return blobType;
+  const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+  return MIME_BY_EXT[ext] || 'application/octet-stream';
+}
+
 /**
- * GET /api/images/:bucket/:path - 从 Supabase Storage 获取图片
+ * GET /api/images/:path - 从 Supabase Storage 获取文件（图片 / HTML）
  */
 export async function GET(
   req: NextRequest,
@@ -22,12 +38,12 @@ export async function GET(
   }
 
   const headers = new Headers();
-  headers.set('Content-Type', data.type || 'image/png');
+  const filename = path[path.length - 1] || 'file';
+  headers.set('Content-Type', getMimeType(filename, data.type));
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
 
   const download = req.nextUrl.searchParams.get('download');
   if (download === '1') {
-    const filename = path[path.length - 1] || 'image';
     headers.set('Content-Disposition', `attachment; filename="${filename}"`);
   }
 

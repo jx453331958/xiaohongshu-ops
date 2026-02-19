@@ -36,6 +36,8 @@
 ## 数据模型
 
 - 表: `articles`, `article_versions`, `article_images`, `article_stats`
+- `article_images` 包含 `html_url` / `html_storage_path` 字段，关联图片的 HTML 源文件
+- 图片文件使用 UUID 命名: `{articleId}/{uuid}.png`，对应 HTML: `{articleId}/{uuid}.html`
 - 状态流: draft → pending_render → pending_review → published | draft → archived
 - 状态 Tag 映射: draft→default, pending_render→warning, pending_review→processing, published→success, archived→orange（antd Tag 组件）
 
@@ -68,8 +70,8 @@
 - **技术**: `@modelcontextprotocol/sdk` + Streamable HTTP 传输
 - **端点**: `http://<server-ip>:8080/mcp`（通过 Nginx 代理）
 - **配置**: 环境变量 `XHS_API_BASE_URL` + `XHS_API_AUTH_TOKEN` + `MCP_PORT`（容器内部端口，不暴露到主机）
-- **11 个工具**: list_articles, create_article, get_article, update_article, delete_article, get_article_status, update_article_status, publish_article, list_article_images, delete_article_image, get_article_versions
-- **不含图片上传**（LLM 无法提供二进制文件，通过 Web UI 上传）
+- **15 个工具**: list_articles, create_article, get_article, update_article, delete_article, get_article_status, update_article_status, publish_article, list_article_images, delete_article_image, get_article_versions, upload_image_html, get_image_html, update_image_html, delete_image_html
+- **不含图片上传**（LLM 无法提供二进制文件，通过 Web UI 上传），但支持 HTML 源文件的文本 CRUD
 - **接口文档**: `docs/api.md`
 - **本地开发**: `cd mcp-server && npm run dev`
 - **构建**: `cd mcp-server && npm run build && node build/index.js`

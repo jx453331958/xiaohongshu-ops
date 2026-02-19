@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { randomUUID } from 'crypto';
 import { getServiceSupabase } from '@/lib/supabase';
 import { withAuth, errorResponse, successResponse } from '@/lib/auth';
 import { ArticleImage } from '@/types/article';
@@ -12,7 +13,7 @@ async function ensureBucket(supabase: ReturnType<typeof getServiceSupabase>) {
   const { error } = await supabase.storage.createBucket(BUCKET_NAME, {
     public: true,
     fileSizeLimit: 10485760, // 10MB
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'text/html'],
   });
   if (error && !error.message.includes('already exists')) {
     throw error;
@@ -84,9 +85,9 @@ export const POST = withAuth(async (req: NextRequest, context: RouteContext) => 
     // 确保 bucket 存在
     await ensureBucket(supabase);
 
-    // 生成唯一文件名
+    // 生成 UUID 文件名
     const fileExt = file.name.split('.').pop();
-    const fileName = `${id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const fileName = `${id}/${randomUUID()}.${fileExt}`;
 
     // 上传到 Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -152,11 +153,15 @@ export const DELETE = withAuth(async (req: NextRequest, context: RouteContext) =
       throw fetchError;
     }
 
-    // 从 Storage 删除
-    if (image.storage_path) {
+    // 从 Storage 删除（PNG + HTML）
+    const pathsToDelete: string[] = [];
+    if (image.storage_path) pathsToDelete.push(image.storage_path);
+    if (image.html_storage_path) pathsToDelete.push(image.html_storage_path);
+
+    if (pathsToDelete.length > 0) {
       const { error: storageError } = await supabase.storage
         .from(BUCKET_NAME)
-        .remove([image.storage_path]);
+        .remove(pathsToDelete);
 
       if (storageError) {
         console.error('删除存储文件失败:', storageError);

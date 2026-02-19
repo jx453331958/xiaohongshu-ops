@@ -125,7 +125,7 @@ Content-Type: application/json
 GET /api/articles/:id/images
 \`\`\`
 
-按 sort_order 升序返回。
+按 sort_order 升序返回。每张图片包含 \`html_url\`（有值表示已关联 HTML 源文件）。
 
 #### 删除图片
 
@@ -133,9 +133,49 @@ GET /api/articles/:id/images
 DELETE /api/articles/:id/images?image_id=<image-uuid>
 \`\`\`
 
-同时删除存储文件和数据库记录。
+同时删除存储文件（PNG + HTML）和数据库记录。
 
 > 注意：图片上传需通过 Web UI 完成，LLM 无法提供二进制文件。
+
+### HTML 源文件管理
+
+图片（PNG）由 HTML 模板渲染而来，可为每张图片关联 HTML 源文件。
+
+#### 上传 HTML 源文件
+
+\`\`\`
+POST /api/articles/:id/images/:imageId/html
+Content-Type: application/json
+
+{"html": "<html>...</html>"}
+\`\`\`
+
+图片必须已存在且尚无 HTML 源文件。
+
+#### 获取 HTML 源文件
+
+\`\`\`
+GET /api/articles/:id/images/:imageId/html
+\`\`\`
+
+返回 \`html_content\` 字段包含完整 HTML 内容。
+
+#### 更新 HTML 源文件
+
+\`\`\`
+PUT /api/articles/:id/images/:imageId/html
+Content-Type: application/json
+
+{"html": "<html>新内容</html>"}
+\`\`\`
+
+#### 删除 HTML 源文件
+
+\`\`\`
+DELETE /api/articles/:id/images/:imageId/html
+\`\`\`
+
+仅删除 HTML 文件，保留图片本身。
 
 ### 版本历史
 
@@ -152,10 +192,12 @@ GET /api/articles/:id/versions
 ### 创建到发布的完整流程
 
 1. **创建草稿** → \`POST /api/articles\`
-2. **上传图片** → 通过 Web UI 上传 slide 图片
-3. **提交渲染** → \`PUT /api/articles/:id/status\` body: \`{"status":"pending_render"}\`
-4. **渲染完成，提交审核** → \`PUT /api/articles/:id/status\` body: \`{"status":"pending_review"}\`
-5. **审核通过，发布** → \`POST /api/articles/:id/publish\` body: \`{"xhs_note_id":"..."}\`
+2. **上传图片** → 通过 Web UI 上传 slide 图片（PNG）
+3. **上传 HTML 源文件** → \`POST /api/articles/:id/images/:imageId/html\` body: \`{"html":"..."}\`
+   - **重要：上传图片时必须同时上传 HTML 源文件和渲染后的 PNG 图片**
+4. **提交渲染** → \`PUT /api/articles/:id/status\` body: \`{"status":"pending_render"}\`
+5. **渲染完成，提交审核** → \`PUT /api/articles/:id/status\` body: \`{"status":"pending_review"}\`
+6. **审核通过，发布** → \`POST /api/articles/:id/publish\` body: \`{"xhs_note_id":"..."}\`
 
 ### 常见操作示例
 

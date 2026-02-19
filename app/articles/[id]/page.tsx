@@ -19,6 +19,7 @@ import {
   FileTextOutlined,
   PictureOutlined,
   UploadOutlined,
+  CodeOutlined,
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
 import { AppLayout } from '@/components/app-layout';
@@ -54,6 +55,11 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [htmlModalOpen, setHtmlModalOpen] = useState(false);
+  const [htmlModalImage, setHtmlModalImage] = useState<ArticleImage | null>(null);
+  const [htmlContent, setHtmlContent] = useState('');
+  const [htmlLoading, setHtmlLoading] = useState(false);
+  const htmlFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -181,6 +187,97 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           message.success('删除成功');
         } catch (error: any) {
           message.error(error.message || '删除失败');
+        }
+      },
+    });
+  };
+
+  const openHtmlModal = async (image: ArticleImage) => {
+    setHtmlModalImage(image);
+    setHtmlModalOpen(true);
+    if (image.html_url) {
+      try {
+        setHtmlLoading(true);
+        const data = await apiRequest<{ html_content: string }>(`/api/articles/${id}/images/${image.id}/html`);
+        setHtmlContent(data.html_content);
+      } catch (error: any) {
+        message.error(error.message || '加载 HTML 失败');
+        setHtmlContent('');
+      } finally {
+        setHtmlLoading(false);
+      }
+    } else {
+      setHtmlContent('');
+    }
+  };
+
+  const handleUploadHtml = async (file: File) => {
+    if (!htmlModalImage) return;
+    try {
+      setHtmlLoading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`/api/articles/${id}/images/${htmlModalImage.id}/html`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setImages(images.map((img) => img.id === htmlModalImage.id ? data : img));
+      setHtmlModalImage(data);
+      // 加载上传的内容到编辑区
+      const htmlData = await apiRequest<{ html_content: string }>(`/api/articles/${id}/images/${htmlModalImage.id}/html`);
+      setHtmlContent(htmlData.html_content);
+      message.success('HTML 上传成功');
+    } catch (error: any) {
+      message.error(error.message || 'HTML 上传失败');
+    } finally {
+      setHtmlLoading(false);
+      if (htmlFileInputRef.current) htmlFileInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveHtml = async () => {
+    if (!htmlModalImage) return;
+    try {
+      setHtmlLoading(true);
+      if (htmlModalImage.html_url) {
+        await apiRequest(`/api/articles/${id}/images/${htmlModalImage.id}/html`, {
+          method: 'PUT',
+          body: JSON.stringify({ html: htmlContent }),
+        });
+      } else {
+        const data = await apiRequest<ArticleImage>(`/api/articles/${id}/images/${htmlModalImage.id}/html`, {
+          method: 'POST',
+          body: JSON.stringify({ html: htmlContent }),
+        });
+        setImages(images.map((img) => img.id === htmlModalImage.id ? data : img));
+        setHtmlModalImage(data);
+      }
+      message.success('HTML 保存成功');
+    } catch (error: any) {
+      message.error(error.message || 'HTML 保存失败');
+    } finally {
+      setHtmlLoading(false);
+    }
+  };
+
+  const handleDeleteHtml = async () => {
+    if (!htmlModalImage) return;
+    modal.confirm({
+      title: '确定删除 HTML 源文件吗？',
+      content: '仅删除 HTML 文件，保留图片本身。',
+      onOk: async () => {
+        try {
+          await apiRequest(`/api/articles/${id}/images/${htmlModalImage.id}/html`, { method: 'DELETE' });
+          const updated = { ...htmlModalImage, html_url: null, html_storage_path: null };
+          setImages(images.map((img) => img.id === htmlModalImage.id ? updated : img));
+          setHtmlModalImage(updated);
+          setHtmlContent('');
+          message.success('HTML 已删除');
+        } catch (error: any) {
+          message.error(error.message || '删除 HTML 失败');
         }
       },
     });
@@ -374,6 +471,11 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
               }
               size="small"
               actions={[
+                <CodeOutlined
+                  key="html"
+                  style={{ color: image.html_url ? '#52c41a' : undefined }}
+                  onClick={() => openHtmlModal(image)}
+                />,
                 <DownloadOutlined
                   key="download"
                   onClick={() => handleDownloadImage(image.url)}
@@ -387,6 +489,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             >
               <Text type="secondary" style={{ fontSize: 12 }}>
                 {new Date(image.created_at).toLocaleDateString('zh-CN')}
+                {image.html_url && <span style={{ marginLeft: 4, color: '#52c41a' }}>HTML</span>}
               </Text>
             </Card>
           ))}
@@ -506,6 +609,72 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         ) : (
           <Tabs defaultActiveKey="edit" items={tabItems} />
         )}
+        {/* HTML 源文件 Modal */}
+        <Modal
+          title="HTML 源文件"
+          open={htmlModalOpen}
+          onCancel={() => setHtmlModalOpen(false)}
+          width={isMobile ? '100%' : 720}
+          footer={null}
+          styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
+        >
+          {htmlLoading ? (
+            <div style={{ textAlign: 'center', padding: 48 }}>
+              <Spin />
+            </div>
+          ) : htmlModalImage?.html_url || htmlContent ? (
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <textarea
+                value={htmlContent}
+                onChange={(e) => setHtmlContent(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: 300,
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  background: '#1a1625',
+                  color: '#e0d8ec',
+                  border: '1px solid #3d3552',
+                  borderRadius: 6,
+                  padding: 12,
+                  resize: 'vertical',
+                }}
+              />
+              <Space>
+                <Button type="primary" onClick={handleSaveHtml} loading={htmlLoading}>
+                  保存
+                </Button>
+                {htmlModalImage?.html_url && (
+                  <Button danger onClick={handleDeleteHtml}>
+                    删除 HTML
+                  </Button>
+                )}
+              </Space>
+            </Space>
+          ) : (
+            <Space direction="vertical" style={{ width: '100%', textAlign: 'center', padding: '24px 0' }} size="middle">
+              <Text type="secondary">该图片暂无 HTML 源文件</Text>
+              <Space>
+                <input
+                  ref={htmlFileInputRef}
+                  type="file"
+                  accept=".html,.htm"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUploadHtml(file);
+                  }}
+                  style={{ display: 'none' }}
+                />
+                <Button icon={<UploadOutlined />} onClick={() => htmlFileInputRef.current?.click()}>
+                  上传 HTML 文件
+                </Button>
+                <Button onClick={() => setHtmlContent('<html>\n<head>\n  <style>\n  </style>\n</head>\n<body>\n</body>\n</html>')}>
+                  新建空白
+                </Button>
+              </Space>
+            </Space>
+          )}
+        </Modal>
       </div>
     </AppLayout>
   );

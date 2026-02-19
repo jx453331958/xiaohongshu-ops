@@ -38,4 +38,93 @@ export function registerImageTools(server: McpServer): void {
       }
     },
   );
+
+  // --- HTML 源文件 CRUD ---
+
+  server.tool(
+    "upload_image_html",
+    "为指定图片上传 HTML 源文件（图片必须已存在且尚无 HTML）",
+    {
+      article_id: z.string().uuid().describe("文章 UUID"),
+      image_id: z.string().uuid().describe("图片 UUID"),
+      html_content: z.string().describe("HTML 源文件内容"),
+    },
+    async ({ article_id, image_id, html_content }) => {
+      try {
+        const result = await apiRequest(
+          `/articles/${article_id}/images/${image_id}/html`,
+          {
+            method: "POST",
+            body: JSON.stringify({ html: html_content }),
+          },
+        );
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
+  server.tool(
+    "get_image_html",
+    "获取指定图片的 HTML 源文件内容",
+    {
+      article_id: z.string().uuid().describe("文章 UUID"),
+      image_id: z.string().uuid().describe("图片 UUID"),
+    },
+    async ({ article_id, image_id }) => {
+      try {
+        const result = await apiRequest(
+          `/articles/${article_id}/images/${image_id}/html`,
+        );
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
+  server.tool(
+    "update_image_html",
+    "更新指定图片的 HTML 源文件内容（必须已有 HTML）",
+    {
+      article_id: z.string().uuid().describe("文章 UUID"),
+      image_id: z.string().uuid().describe("图片 UUID"),
+      html_content: z.string().describe("新的 HTML 源文件内容"),
+    },
+    async ({ article_id, image_id, html_content }) => {
+      try {
+        const result = await apiRequest(
+          `/articles/${article_id}/images/${image_id}/html`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ html: html_content }),
+          },
+        );
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
+  server.tool(
+    "delete_image_html",
+    "删除指定图片的 HTML 源文件（保留图片本身）",
+    {
+      article_id: z.string().uuid().describe("文章 UUID"),
+      image_id: z.string().uuid().describe("图片 UUID"),
+    },
+    async ({ article_id, image_id }) => {
+      try {
+        const result = await apiRequest(
+          `/articles/${article_id}/images/${image_id}/html`,
+          { method: "DELETE" },
+        );
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
 }
