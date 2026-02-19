@@ -12,9 +12,11 @@ const MIME_BY_EXT: Record<string, string> = {
 };
 
 function getMimeType(filename: string, blobType?: string): string {
-  if (blobType && blobType !== 'application/octet-stream') return blobType;
   const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
-  return MIME_BY_EXT[ext] || 'application/octet-stream';
+  // 已知扩展名优先（Supabase blob type 可能不准确，如 HTML 返回 text/plain）
+  if (MIME_BY_EXT[ext]) return MIME_BY_EXT[ext];
+  if (blobType && blobType !== 'application/octet-stream') return blobType;
+  return 'application/octet-stream';
 }
 
 /**
