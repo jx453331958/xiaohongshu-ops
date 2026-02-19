@@ -111,6 +111,19 @@ draft → pending_render → pending_review → published → archived
 | comments | number | 评论数 |
 | recorded_at | ISO 8601 | 记录时间 |
 
+### ArticleTemplate
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| title | string | 模板标题 |
+| description | string \| null | 模板描述 |
+| content | string | 模板内容（CSS/Markdown） |
+| tags | string[] | 标签数组 |
+| category | string \| null | 分类（如 css_theme, content_type） |
+| created_at | ISO 8601 | 创建时间 |
+| updated_at | ISO 8601 | 更新时间 |
+
 ---
 
 ## 接口列表
@@ -730,7 +743,159 @@ GET /api/articles/:id/versions
 
 ---
 
-### 17. 图片/文件代理
+### 17. 获取模板列表
+
+```
+GET /api/templates
+```
+
+**查询参数:**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| search | string | 否 | - | 按标题模糊搜索 |
+| category | string | 否 | - | 按分类筛选 |
+| limit | number | 否 | 100 | 每页条数 |
+| offset | number | 否 | 0 | 偏移量 |
+
+**响应: 200**
+
+```json
+{
+  "data": {
+    "templates": [ArticleTemplate],
+    "total": 9,
+    "limit": 100,
+    "offset": 0
+  }
+}
+```
+
+---
+
+### 18. 创建模板
+
+```
+POST /api/templates
+```
+
+**请求体:**
+
+```json
+{
+  "title": "模板标题",           // 必填
+  "content": "模板内容",         // 可选
+  "description": "模板描述",     // 可选
+  "tags": ["CSS", "暗色"],       // 可选
+  "category": "css_theme"        // 可选
+}
+```
+
+**响应: 201**
+
+```json
+{
+  "data": ArticleTemplate
+}
+```
+
+---
+
+### 19. 获取模板详情
+
+```
+GET /api/templates/:id
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 模板 ID |
+
+**响应: 200**
+
+```json
+{
+  "data": ArticleTemplate
+}
+```
+
+**错误:**
+
+| 状态码 | 说明 |
+|--------|------|
+| 404 | 模板不存在 |
+
+---
+
+### 20. 更新模板
+
+```
+PUT /api/templates/:id
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 模板 ID |
+
+**请求体（均为可选，仅传需要更新的字段）:**
+
+```json
+{
+  "title": "新标题",
+  "content": "新内容",
+  "description": "新描述",
+  "tags": ["新标签"],
+  "category": "content_type"
+}
+```
+
+**响应: 200**
+
+```json
+{
+  "data": ArticleTemplate
+}
+```
+
+**错误:**
+
+| 状态码 | 说明 |
+|--------|------|
+| 404 | 模板不存在 |
+
+---
+
+### 21. 删除模板
+
+```
+DELETE /api/templates/:id
+```
+
+**路径参数:**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 模板 ID |
+
+**响应: 200**
+
+```json
+{
+  "data": {
+    "message": "模板已删除"
+  }
+}
+```
+
+不可恢复。
+
+---
+
+### 22. 图片/文件代理
 
 ```
 GET /api/images/{path}
@@ -885,3 +1050,18 @@ curl -H "Authorization: Bearer $TOKEN" \
 | recorded_at | TIMESTAMPTZ | - | now() |
 
 索引: `(article_id, recorded_at DESC)`
+
+### article_templates
+
+| 列 | 类型 | 约束 | 默认值 |
+|----|------|------|--------|
+| id | UUID | PRIMARY KEY | gen_random_uuid() |
+| title | TEXT | NOT NULL | - |
+| description | TEXT | - | NULL |
+| content | TEXT | - | '' |
+| tags | TEXT[] | - | '{}' |
+| category | TEXT | - | NULL |
+| created_at | TIMESTAMPTZ | - | now() |
+| updated_at | TIMESTAMPTZ | - | now()（触发器自动更新） |
+
+索引: `category`, `created_at DESC`

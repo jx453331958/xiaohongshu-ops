@@ -1,10 +1,10 @@
 const SKILL_TEMPLATE = `---
 name: xiaohongshu-ops
 description: >
-  管理小红书内容运营平台的文章。当用户提到创建文章、查看文章列表、
-  修改文章状态、发布到小红书、管理图片、查看版本历史等操作时触发。
+  管理小红书内容运营平台的文章和模板。当用户提到创建文章、查看文章列表、
+  修改文章状态、发布到小红书、管理图片、查看版本历史、管理模板等操作时触发。
   通过 REST API 调用 xiaohongshu-ops 后台。
-argument-hint: "[操作描述，如：列出所有草稿、创建一篇关于AI工具的文章]"
+argument-hint: "[操作描述，如：列出所有草稿、创建一篇关于AI工具的文章、查看模板列表]"
 ---
 
 # 小红书内容运营
@@ -186,6 +186,57 @@ GET /api/articles/:id/versions
 \`\`\`
 
 按版本号倒序（最新在前）。每次修改标题或正文时自动生成新版本。
+
+### 模板管理
+
+模板用于存储常用的文章模板（CSS 主题、内容类型等），创建文章时可从模板复制内容。
+
+#### 获取模板列表
+
+\`\`\`
+GET /api/templates?search=关键词&category=css_theme&limit=100&offset=0
+\`\`\`
+
+参数（均为可选）：
+- \`search\`: 按标题模糊搜索
+- \`category\`: 按分类筛选（如 \`css_theme\`、\`content_type\`）
+- \`limit\`（默认 100）/ \`offset\`（默认 0）: 分页
+
+#### 创建模板
+
+\`\`\`
+POST /api/templates
+Content-Type: application/json
+
+{"title": "模板标题", "content": "模板内容", "description": "描述", "tags": ["标签"], "category": "css_theme"}
+\`\`\`
+
+- \`title\`（必填），其余可选
+
+#### 获取模板详情
+
+\`\`\`
+GET /api/templates/:id
+\`\`\`
+
+#### 更新模板
+
+\`\`\`
+PUT /api/templates/:id
+Content-Type: application/json
+
+{"title": "新标题", "content": "新内容", "tags": ["新标签"], "category": "content_type"}
+\`\`\`
+
+只传需要更新的字段。
+
+#### 删除模板
+
+\`\`\`
+DELETE /api/templates/:id
+\`\`\`
+
+不可恢复。
 
 ## 工作流程
 
