@@ -110,8 +110,11 @@ export default function TemplatesPage() {
       title: '更新时间',
       dataIndex: 'updated_at',
       key: 'updated_at',
-      width: 120,
-      render: (text) => new Date(text).toLocaleDateString('zh-CN'),
+      width: 180,
+      render: (text) => new Date(text).toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+      }),
     },
     {
       title: '操作',
@@ -185,7 +188,10 @@ export default function TemplatesPage() {
                         {template.description || template.tags.slice(0, 3).map((t) => `#${t}`).join(' ') || '-'}
                       </Text>
                       <Text type="secondary" style={{ fontSize: 12, flexShrink: 0 }}>
-                        {new Date(template.updated_at).toLocaleDateString('zh-CN')}
+                        {new Date(template.updated_at).toLocaleString('zh-CN', {
+                          year: 'numeric', month: '2-digit', day: '2-digit',
+                          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                        })}
                       </Text>
                     </div>
                   </div>

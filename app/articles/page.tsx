@@ -138,11 +138,14 @@ export default function ArticlesPage() {
       render: (text) => text || '-',
     },
     {
-      title: '创建时间',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: 120,
-      render: (text) => new Date(text).toLocaleDateString('zh-CN'),
+      title: '更新时间',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
+      width: 180,
+      render: (text) => new Date(text).toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+      }),
     },
     {
       title: '操作',
@@ -231,7 +234,10 @@ export default function ArticlesPage() {
                         {article.tags.slice(0, 3).map((t) => `#${t}`).join(' ')}
                       </Text>
                       <Text type="secondary" style={{ fontSize: 12 }}>
-                        {new Date(article.created_at).toLocaleDateString('zh-CN')}
+                        {new Date(article.updated_at).toLocaleString('zh-CN', {
+                          year: 'numeric', month: '2-digit', day: '2-digit',
+                          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                        })}
                       </Text>
                     </div>
                   </div>

@@ -80,7 +80,8 @@ export default function VersionsPage({ params }: { params: Promise<{ id: string 
         <Text strong style={{ display: 'block', marginBottom: 4 }} ellipsis>{version.title}</Text>
         <Text type="secondary" style={{ fontSize: 12 }}>
           {new Date(version.created_at).toLocaleString('zh-CN', {
-            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
           })}
         </Text>
       </div>
@@ -94,7 +95,10 @@ export default function VersionsPage({ params }: { params: Promise<{ id: string 
           <Tag>版本 {selectedVersion.version_num}</Tag>
         </Descriptions.Item>
         <Descriptions.Item label="创建时间">
-          {new Date(selectedVersion.created_at).toLocaleString('zh-CN')}
+          {new Date(selectedVersion.created_at).toLocaleString('zh-CN', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+          })}
         </Descriptions.Item>
       </Descriptions>
 

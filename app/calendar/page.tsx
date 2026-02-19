@@ -45,12 +45,12 @@ export default function CalendarPage() {
   };
 
   const articlesOnSelectedDate = articles.filter((article) =>
-    isSameDay(new Date(article.created_at), selectedDate)
+    isSameDay(new Date(article.updated_at), selectedDate)
   );
 
   const dateCellRender = (value: Dayjs) => {
     const date = value.toDate();
-    const count = articles.filter((a) => isSameDay(new Date(a.created_at), date)).length;
+    const count = articles.filter((a) => isSameDay(new Date(a.updated_at), date)).length;
     if (count === 0) return null;
     return <Badge count={count} size="small" style={{ backgroundColor: '#FF2442' }} />;
   };
@@ -103,8 +103,8 @@ export default function CalendarPage() {
                       title={<Link href={`/articles/${article.id}`} style={{ color: '#F5F3F7' }}>{article.title}</Link>}
                       description={
                         <span>
-                          {new Date(article.created_at).toLocaleTimeString('zh-CN', {
-                            hour: '2-digit', minute: '2-digit',
+                          {new Date(article.updated_at).toLocaleTimeString('zh-CN', {
+                            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
                           })}
                           {article.tags.length > 0 && (
                             <span style={{ marginLeft: 8, color: '#7A6F8A' }}>
@@ -146,8 +146,8 @@ export default function CalendarPage() {
                         title={<Link href={`/articles/${article.id}`} style={{ color: '#F5F3F7' }}>{article.title}</Link>}
                         description={
                           <span>
-                            {new Date(article.created_at).toLocaleTimeString('zh-CN', {
-                              hour: '2-digit', minute: '2-digit',
+                            {new Date(article.updated_at).toLocaleTimeString('zh-CN', {
+                              hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
                             })}
                             {article.tags.length > 0 && (
                               <span style={{ marginLeft: 8, color: '#7A6F8A' }}>

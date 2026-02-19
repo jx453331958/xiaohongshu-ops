@@ -182,9 +182,9 @@ export default function DashboardPage() {
                   title={<Link href={`/articles/${article.id}`} style={{ color: '#F5F3F7' }}>{article.title}</Link>}
                   description={
                     <span>
-                      {new Date(article.created_at).toLocaleString('zh-CN', {
+                      {new Date(article.updated_at).toLocaleString('zh-CN', {
                         year: 'numeric', month: '2-digit', day: '2-digit',
-                        hour: '2-digit', minute: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
                       })}
                       {article.tags.length > 0 && (
                         <span style={{ marginLeft: 8, color: '#7A6F8A' }}>

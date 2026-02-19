@@ -495,7 +495,10 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
               ]}
             >
               <Text type="secondary" style={{ fontSize: 12 }}>
-                {new Date(image.created_at).toLocaleDateString('zh-CN')}
+                {new Date(image.created_at).toLocaleString('zh-CN', {
+                  year: 'numeric', month: '2-digit', day: '2-digit',
+                  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                })}
                 {image.html_url && <span style={{ marginLeft: 4, color: '#52c41a' }}>HTML</span>}
               </Text>
             </Card>
